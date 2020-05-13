@@ -26,9 +26,9 @@ class CIFAR100(VisionDataset):
         else:
             filename = self.test_file
 
-        if not self._check_integrity():
+"""        if not self._check_integrity():
             raise RuntimeError('Dataset not found or corrupted.' +
-                               ' You can use download=True to download it')
+                               ' You can use download=True to download it')"""
 
         data_path = os.path.join(self.root, self.base_folder, filename)
         self.data = []
