@@ -37,7 +37,7 @@ class CIFAR100(VisionDataset):
         self.data = []
         self.targets = []
 
-         with open(data_path, 'rb') as f:
+        with open(data_path, 'rb') as f:
             entry = pickle.load(f, encoding='latin1')
             self.data = entry['data']
             self.labels = entry['fine_labels']
