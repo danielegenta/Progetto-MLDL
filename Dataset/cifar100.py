@@ -26,10 +26,6 @@ class CIFAR100(VisionDataset):
         else:
             filename = self.test_file
 
-"""        if not self._check_integrity():
-            raise RuntimeError('Dataset not found or corrupted.' +
-                               ' You can use download=True to download it')"""
-
         data_path = os.path.join(self.root, self.base_folder, filename)
         self.data = []
         self.targets = []
@@ -73,13 +69,13 @@ class CIFAR100(VisionDataset):
     def __len__(self):
         return len(self.data)
 
-    def _check_integrity(self):
+"""    def _check_integrity(self):
         root = self.root
         for fentry in (self.train_list + self.test_list):
             filename, md5 = fentry[0], fentry[1]
             fpath = os.path.join(root, self.base_folder, filename)
             if not check_integrity(fpath, md5):
                 return False
-        return True
+        return True"""
 
 
