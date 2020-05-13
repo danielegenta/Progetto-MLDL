@@ -43,7 +43,7 @@ class CIFAR100(VisionDataset):
         self._load_meta()
 
     def _load_meta(self):
-        meta_path = os.path.join(self.root, self.base_folder, self.meta_filename)
+        meta_path = os.path.join(self.root, self.base_folder, self.meta_file)
         with open(meta_path, 'rb') as f:
             meta = pickle.load(f, encoding='latin1')
             self.label_names = meta['fine_label_names']
