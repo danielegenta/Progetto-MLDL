@@ -7,14 +7,14 @@ import numpy as np
 import pickle
 from torchvision.datasets import VisionDataset
 
-	class CIFAR100(VisionDataset):
-	    """`CIFAR100 <https://www.cs.toronto.edu/~kriz/cifar.html>`_ Dataset.
-	    This is a subclass of the `CIFAR10` Dataset.
-	    """
-	    base_folder = 'cifar-100-python'
-	    train_file = 'train'
-	    test_file = 'test'
-	    meta_file = 'meta'
+class CIFAR100(VisionDataset):
+    """`CIFAR100 <https://www.cs.toronto.edu/~kriz/cifar.html>`_ Dataset.
+    This is a subclass of the `CIFAR10` Dataset.
+    """
+    base_folder = 'cifar-100-python'
+    train_file = 'train'
+    test_file = 'test'
+    meta_file = 'meta'
 
     def __init__(self, root, split = 'train', transform = None):
 
@@ -50,7 +50,7 @@ from torchvision.datasets import VisionDataset
         self._load_meta()
 
     def _load_meta(self):
-         meta_path = os.path.join(self.root, self.base_folder, self.meta_filename)
+        meta_path = os.path.join(self.root, self.base_folder, self.meta_filename)
         with open(meta_path, 'rb') as f:
             meta = pickle.load(f, encoding='latin1')
             self.label_names = meta['fine_label_names']
