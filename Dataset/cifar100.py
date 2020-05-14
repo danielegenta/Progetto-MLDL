@@ -1,15 +1,21 @@
-# ref: https://github.com/pytorch/vision/blob/master/torchvision/datasets/cifar.py
+# ref:
+# https://github.com/pytorch/vision/blob/master/torchvision/datasets/cifar.py
 # https://pytorch.org/docs/stable/_modules/torchvision/datasets/cifar.html#CIFAR10
+# homework2 (caltech)
+
+from torchvision.datasets import VisionDataset
 from PIL import Image
+
 import os
 import os.path
 import numpy as np
 import pickle
-from torchvision.datasets import VisionDataset
 
+# This is an handler class for the Cifar dataset
 class CIFAR100(VisionDataset):
-    """`CIFAR100 <https://www.cs.toronto.edu/~kriz/cifar.html>`_ Dataset.
-    This is a subclass of the `CIFAR10` Dataset.
+    """
+    `CIFAR100 <https://www.cs.toronto.edu/~kriz/cifar.html>`_ Dataset.
+    This is a subclass of the `CIFAR100` Dataset.
     """
     base_folder = 'cifar-100-python'
     train_file = 'train'
@@ -17,7 +23,15 @@ class CIFAR100(VisionDataset):
     meta_file = 'meta'
 
     def __init__(self, root, split = 'train', transform = None):
-
+	 	"""
+	    Args:
+	        root (string): Root directory of the dataset where directory
+	            cifar-100-python exists.
+	        split (string, optional): If 'train', creates dataset from training
+	            set, otherwise creates from test set.
+	        transform (callable, optional): A function/transform that takes in a
+	            PIL image and returns a transformed version.
+	    """
         super(CIFAR100, self).__init__(root, transform=transform)
 
         self.split = split
@@ -68,6 +82,7 @@ class CIFAR100(VisionDataset):
 
     def __len__(self):
         return len(self.data)
+
 
 """    def _check_integrity(self):
         root = self.root
