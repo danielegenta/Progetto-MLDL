@@ -23,15 +23,15 @@ class CIFAR100(VisionDataset):
     meta_file = 'meta'
 
     def __init__(self, root, split = 'train', transform = None):
-	 	"""
-	    Args:
-	        root (string): Root directory of the dataset where directory
-	            cifar-100-python exists.
-	        split (string, optional): If 'train', creates dataset from training
-	            set, otherwise creates from test set.
-	        transform (callable, optional): A function/transform that takes in a
-	            PIL image and returns a transformed version.
-	    """
+        """
+          Args:
+              root (string): Root directory of the dataset where directory
+                  cifar-100-python exists.
+              split (string, optional): If 'train', creates dataset from training
+                  set, otherwise creates from test set.
+              transform (callable, optional): A function/transform that takes in a
+                  PIL image and returns a transformed version.
+        """
         super(CIFAR100, self).__init__(root, transform=transform)
 
         self.split = split
@@ -42,7 +42,7 @@ class CIFAR100(VisionDataset):
 
         data_path = os.path.join(self.root, self.base_folder, filename)
         self.data = []
-        self.targets = []
+        self.labels = []
 
         with open(data_path, 'rb') as f:
             entry = pickle.load(f, encoding='latin1')
@@ -69,7 +69,7 @@ class CIFAR100(VisionDataset):
         Returns:
             tuple: (image, target) where target is index of the target class.
         """
-        img, target = self.data[index], self.targets[index]
+        img, target = self.data[index], self.labels[index]
 
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
@@ -83,14 +83,14 @@ class CIFAR100(VisionDataset):
     def __len__(self):
         return len(self.data)
 
-
-"""    def _check_integrity(self):
-        root = self.root
-        for fentry in (self.train_list + self.test_list):
-            filename, md5 = fentry[0], fentry[1]
-            fpath = os.path.join(root, self.base_folder, filename)
-            if not check_integrity(fpath, md5):
-                return False
-        return True"""
-
-
+    def getTargets(self):
+    	return set(self.labels)
+     
+    # test
+    def get_indices(self,classes):
+      indices =  []
+      for class_name in classes:
+        for i in range(len(self.labels)):
+          if self.labels[i] == class_name:
+              indices.append(i)
+      return indices
