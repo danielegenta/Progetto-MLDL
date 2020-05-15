@@ -9,7 +9,9 @@ from PIL import Image
 import os
 import os.path
 import numpy as np
+import pandas as pd
 import pickle
+import random
 
 # This is an handler class for the Cifar dataset
 class CIFAR100(VisionDataset):
@@ -41,18 +43,25 @@ class CIFAR100(VisionDataset):
             filename = self.test_file
 
         data_path = os.path.join(self.root, self.base_folder, filename)
-        self.data = []
-        self.labels = []
+        data = None
+        labels = None
 
         with open(data_path, 'rb') as f:
             entry = pickle.load(f, encoding='latin1')
-            self.data = entry['data']
-            self.labels = entry['fine_labels']
+            data = entry['data']
+            labels = entry['fine_labels']
         
-        self.data = np.vstack(self.data).reshape(-1, 3, 32, 32)
-        self.data = self.data.transpose((0, 2, 3, 1))  # Convert to HWC
+        data = np.vstack(data).reshape(-1, 3, 32, 32)
+        data = data.transpose((0, 2, 3, 1))  # Convert to HWC
         
-        self.labels = np.array(self.labels)
+        labels = np.array(labels)
+
+        self.df = pd.DataFrame()
+        self.df['data'] = pd.Series(list(data))
+        self.df['labels'] = labels
+
+        self.data = self.df['data']
+        self.labels = self.df['labels']
 
         self._load_meta()
 
@@ -69,7 +78,7 @@ class CIFAR100(VisionDataset):
         Returns:
             tuple: (image, target) where target is index of the target class.
         """
-        img, target = self.data[index], self.labels[index]
+        img, target = self.df.loc[index, 'data'], self.df.loc[index, 'labels']
 
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
@@ -87,10 +96,42 @@ class CIFAR100(VisionDataset):
     	return set(self.labels)
      
     # test
-    def get_indices(self,classes):
-      indices =  []
-      for class_name in classes:
-        for i in range(len(self.labels)):
-          if self.labels[i] == class_name:
-              indices.append(i)
-      return indices
+    def get_indices(self, labels):
+        return list(self.df[self.df['labels'].isin(labels)].index)
+
+    def split_classes(self, n_splits=10):
+        all_classes = list(self.df['labels'].value_counts().index)
+        dictionary = {}
+        random.shuffle(all_classes)
+        split_size = int(len(all_classes)/n_splits)
+        for j in range(n_splits):
+            if ((j+1)*split_size < len(all_classes)):
+                split_end = (j+1)*split_size
+            else:
+                split_end = None
+            subgroup = all_classes[j*split_size:split_end]
+            dictionary[j] = self.df[self.df['labels'].isin(subgroup)]
+        return dictionary
+    
+    def split_groups_in_train_validation(self, groups, ratio=0.5, seed=None):
+        groups_train_val = dict()
+        for k, subdf in groups.items():
+            train_indexes = []
+            val_indexes = []
+            split_labels = list(subdf['labels'].value_counts().index)
+            for l in split_labels:
+                indexes_to_sample = list(subdf[subdf['labels'] == l].index)
+                random.seed(seed)
+                train_samples = random.sample(indexes_to_sample, int(len(indexes_to_sample)*ratio))
+                train_indexes = train_indexes + train_samples
+                val_indexes = val_indexes + list(set(indexes_to_sample).difference(set(train_samples)))
+            groups_train_val[k] = {
+                'train': train_indexes,
+                'val': val_indexes
+            }
+        return groups_train_val
+    
+    def split_in_train_val_groups(self, n_splits=10, ratio=0.5, seed=None):
+        groups = self.split_classes(n_splits=n_splits)
+        return self.split_groups_in_train_validation(groups, ratio=ratio, seed=seed)
+    
