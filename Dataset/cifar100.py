@@ -99,7 +99,10 @@ class CIFAR100(VisionDataset):
     def get_indices(self, labels):
         return list(self.df[self.df['labels'].isin(labels)].index)
 
-    def split_classes(self, n_splits=10, seed=None):
+    def split_classes(self, n_splits=10, seed=None, dictionary_of='dataframes'):
+        if dictionary_of not in ['dataframes','indices']:
+            raise ValueError("'dictionary_of' must be equal to 'dataframes' or 'indices'")
+
         all_classes = list(self.df['labels'].value_counts().index)
         dictionary = {}
         random.seed(seed)
@@ -111,7 +114,10 @@ class CIFAR100(VisionDataset):
             else:
                 split_end = None
             subgroup = all_classes[j*split_size:split_end]
-            dictionary[j] = self.df[self.df['labels'].isin(subgroup)]
+            if dictionary_of == 'dataframes':
+                dictionary[j] = self.df[self.df['labels'].isin(subgroup)]
+            elif dictionary_of == 'indices':
+                dictionary[j] = list(self.df[self.df['labels'].isin(subgroup)].index)
         return dictionary
     
     def split_groups_in_train_validation(self, groups, ratio=0.5, seed=None):
