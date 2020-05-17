@@ -99,9 +99,10 @@ class CIFAR100(VisionDataset):
     def get_indices(self, labels):
         return list(self.df[self.df['labels'].isin(labels)].index)
 
-    def split_classes(self, n_splits=10):
+    def split_classes(self, n_splits=10, seed=None):
         all_classes = list(self.df['labels'].value_counts().index)
         dictionary = {}
+        random.seed(seed)
         random.shuffle(all_classes)
         split_size = int(len(all_classes)/n_splits)
         for j in range(n_splits):
@@ -132,6 +133,6 @@ class CIFAR100(VisionDataset):
         return groups_train_val
     
     def split_in_train_val_groups(self, n_splits=10, ratio=0.5, seed=None):
-        groups = self.split_classes(n_splits=n_splits)
+        groups = self.split_classes(n_splits=n_splits, seed=seed)
         return self.split_groups_in_train_validation(groups, ratio=ratio, seed=seed)
     
