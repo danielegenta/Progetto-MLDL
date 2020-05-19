@@ -1,4 +1,6 @@
 # Progetto-MLDL
 Todo:
-- joint training from scratch
-- training without incremental learning, lwf
+
+- point 1
+  - joint training from scratch
+  - training without incremental learning, lwf
