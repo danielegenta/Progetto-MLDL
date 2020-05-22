@@ -40,6 +40,7 @@ class ICaRL(nn.Module):
 
 	    self.n_classes = n_classes
 	    self.n_known = 0
+        self.batch_size = 128
 
 	    # List containing exemplar_sets
 	    # Each exemplar_set is a np.array of N images
@@ -52,7 +53,7 @@ class ICaRL(nn.Module):
 	                            self.dist_loss = nn.BCELoss()
 	                            self.optimizer = optim.SGD(self.parameters(), lr=2.0,
 	                                                       weight_decay=0.00001)
-		  """
+		"""
 
 	    # Means of exemplars
 	    self.compute_means = True
@@ -67,7 +68,7 @@ class ICaRL(nn.Module):
 
     return x
   
-
+  # increment the number of classes considered by the net
   def increment_classes(self, n):
         """Add n classes in the final fc layer"""
         in_features = self.fc.in_features
@@ -78,7 +79,8 @@ class ICaRL(nn.Module):
         self.fc.weight.data[:out_features] = weight
         self.n_classes += n
 
-    # implementation of alg. 4 of icarl paper
+  # implementation of alg. 4 of icarl paper
+  # iCaRL ConstructExemplarSet
   def construct_exemplar_set(self, tensors, m, transform):
     """Construct an exemplar set for image set
     Args:
@@ -93,13 +95,13 @@ class ICaRL(nn.Module):
                     feature = feature / np.linalg.norm(feature) # Normalize
                     features.append(feature[0])
     """
-    loader = DataLoader(tensors,128,True,drop_last=False)
+    loader = DataLoader(tensors,128,True,drop_last=False) #128 = batch size
     for images,labels in loader:
       feature = self.feature_extractor(images)  #(batchsize, 2048)
 
       # is this line important? it yields an error
       #feature = feature / np.linalg.norm(feature) # Normalize
-      
+
       features.append(feature)
 
     features = np.array(features)
@@ -108,14 +110,14 @@ class ICaRL(nn.Module):
 
     exemplar_set = []
     exemplar_features = [] # list of Variables of shape (feature_size,)
-    for k in xrange(m):
-        S = np.sum(exemplar_features, axis=0)
-        phi = features
-        mu = class_mean
-        mu_p = 1.0/(k+1) * (phi + S)
-        mu_p = mu_p / np.linalg.norm(mu_p)
-        i = np.argmin(np.sqrt(np.sum((mu - mu_p) ** 2, axis=1)))
-
+    for k in range(1, m + 1):
+        S = np.sum(exemplar_features, axis=0) # second addend, features in the exemplar set
+        phi = features # first addend, all features
+        mu = class_mean # current class mean
+        mu_p = 1/k * (phi + S) 
+        mu_p = mu_p / np.linalg.norm(mu_p) # normalize
+        i = np.argmin(np.sqrt(np.sum((mu - mu_p) ** 2, axis=1))) # finding the argming means finding the index of the image of the current class 
+                                                                 # that'll be added to the exemplar set
         exemplar_set.append(images[i])
         exemplar_features.append(features[i])
         """
@@ -125,7 +127,14 @@ class ICaRL(nn.Module):
         #features = np.delete(features, i, axis=0)
         """
 
-    self.exemplar_sets.append(np.array(exemplar_set))
+    self.exemplar_sets.append(np.array(exemplar_set)) #update exemplar sets with the updated exemplars images
+
+  def augment_dataset_with_exemplars(dataset):
+    for y, P_y in enumerate(self.exemplar_sets):
+        exemplar_images = P_y
+        exemplar_labels = [y] * len(P_y) #i create a vector of labels [class class class ...] for each class in the exemplar set
+        dataset.append(exemplar_images, exemplar_labels)
+    return dataset
 
   # just a start to make the test work
   def update_representation(self, dataset, new_classes):
@@ -139,10 +148,23 @@ class ICaRL(nn.Module):
     #          (update n_classes)
     self.increment_classes(len(new_classes))
 
+    # 4 - combine current train_subset (dataset) with exemplars
+    #     to form a new augmented train dataset
+    augmented_dataset = augment_dataset_with_exemplars(dataset)
+
+    # define the loader for the augmented_dataset
+    loader = torch.utils.data.DataLoader(dataset, batch_size=self.batch_size,
+                                               shuffle=True, num_workers=4)
+
+    # 5 - store network outputs with pre-update parameters = ???
+
+    # 6 - run network training, with loss function
+
     # todo ...
 
 
   # implementation of alg. 5 of icarl paper
+  # iCaRL ReduceExemplarSet
   def reduce_exemplar_sets(self, m):
         for y, P_y in enumerate(self.exemplar_sets):
           # i keep only the first m exemplar images
