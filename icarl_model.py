@@ -1,10 +1,12 @@
 """
-	This class implement the main model of iCaRL 
+	This class implements the main model of iCaRL 
 	and all the methods regarding the exemplars
 
 	from delivery: iCaRL is made up of 2 components
 	- feature extractor (a convolutional NN) => resnet32 optimized on cifar100
 	- classifier => a FC layer OR a non-parametric classifier (NME)
+
+    main ref: https://github.com/donlee90/icarl
 """
 
 
@@ -40,7 +42,9 @@ class ICaRL(nn.Module):
 
 	    self.n_classes = n_classes
 	    self.n_known = 0
-        self.batch_size = 128
+
+
+        
 
 	    # List containing exemplar_sets
 	    # Each exemplar_set is a np.array of N images
@@ -54,6 +58,16 @@ class ICaRL(nn.Module):
 	                            self.optimizer = optim.SGD(self.parameters(), lr=2.0,
 	                                                       weight_decay=0.00001)
 		"""
+        # Hyper-parameters from iCaRL
+        # the following hyper params whould actualy come from the main 
+        self.BATCH_SIZE = 128
+        self.WEIGHT_DECAY  = 1e-5
+        self.LR = 2
+        self.GAMMA = 0.2 # this allow LR to become 1/5 LR after MILESTONES epochs
+
+        MILESTONES = [49, 63] # when the LR decreases, according to icarl
+        self.optimizer = optim.SGD(self.parameters(), lr=self.LR, weight_decay=self.WEIGHT_DECAY)
+        self.scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=MILESTONES, gamma=GAMMA)
 
 	    # Means of exemplars
 	    self.compute_means = True
@@ -95,7 +109,7 @@ class ICaRL(nn.Module):
                     feature = feature / np.linalg.norm(feature) # Normalize
                     features.append(feature[0])
     """
-    loader = DataLoader(tensors,128,True,drop_last=False) #128 = batch size
+    loader = DataLoader(tensors,self.BATCH_SIZE,True,drop_last=False) #128 = batch size
     for images,labels in loader:
       feature = self.feature_extractor(images)  #(batchsize, 2048)
 
@@ -129,8 +143,9 @@ class ICaRL(nn.Module):
 
     self.exemplar_sets.append(np.array(exemplar_set)) #update exemplar sets with the updated exemplars images
 
-  def augment_dataset_with_exemplars(dataset):
-    for y, P_y in enumerate(self.exemplar_sets):
+
+  def augment_dataset_with_exemplars(self, dataset):
+    for y, P_y in enumerate(self.exemplar_sets): #for each class and exemplar set for that class
         exemplar_images = P_y
         exemplar_labels = [y] * len(P_y) #i create a vector of labels [class class class ...] for each class in the exemplar set
         dataset.append(exemplar_images, exemplar_labels)
@@ -153,21 +168,42 @@ class ICaRL(nn.Module):
     augmented_dataset = augment_dataset_with_exemplars(dataset)
 
     # define the loader for the augmented_dataset
-    loader = torch.utils.data.DataLoader(dataset, batch_size=self.batch_size,
+    loader = torch.utils.data.DataLoader(dataset, batch_size=self.BATCH_SIZE,
                                                shuffle=True, num_workers=4)
 
-    # 5 - store network outputs with pre-update parameters = ???
+    # 5 - store network outputs with pre-update parameters => q
+    q = torch.zeros(len(dataset), self.n_classes)
+    for images, labels in loader:
+        g = nn.functional.sigmoid(self.forward(images))
+        q_i = g.data
+        q[i] = q_i
 
     # 6 - run network training, with loss function
+    optimizer = self.optimizer
 
-    # todo ...
+# to implement!
+"""    # 
+    #cudnn.benchmark # Calling this optimizes runtime
+    #current_step = 0
+    for epoch in range(NUM_EPOCHS):
+        for indices, images, labels in loader:
+            # Bring data over the device of choice
+            images = images.to(DEVICE)
+            labels = labels.to(DEVICE)
+
+            # PyTorch, by default, accumulates gradients after each backward pass
+            # We need to manually set the gradients to zero before starting a new iteration
+            optimizer.zero_grad() # Zero-ing the gradients
+
+            # Forward pass to the network
+            outputs = self.forward(images)"""
 
 
   # implementation of alg. 5 of icarl paper
   # iCaRL ReduceExemplarSet
   def reduce_exemplar_sets(self, m):
         for y, P_y in enumerate(self.exemplar_sets):
-          # i keep only the first m exemplar images
-          # where m is the UPDATED K/number_classes_seen
-          # the number of images per each exemplar set (class) progressively decreases
-          self.exemplar_sets[y] = P_y[:m] 
+            # i keep only the first m exemplar images
+            # where m is the UPDATED K/number_classes_seen
+            # the number of images per each exemplar set (class) progressively decreases
+            self.exemplar_sets[y] = P_y[:m] 
