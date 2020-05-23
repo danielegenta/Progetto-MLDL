@@ -18,6 +18,7 @@ from torch.autograd import Variable
 import numpy as np
 from PIL import Image
 from torch.utils.data import DataLoader
+from torch.backends import cudnn
 
 
 from Cifar100.resnet import resnet34
@@ -52,18 +53,18 @@ class ICaRL(nn.Module):
 	    self.exemplar_sets = []
 
 	    # Learning method
-	    """
+	    
 	    self.cls_loss = nn.CrossEntropyLoss()
-	                            self.dist_loss = nn.BCELoss()
-	                            self.optimizer = optim.SGD(self.parameters(), lr=2.0,
-	                                                       weight_decay=0.00001)
-		"""
+	    self.dist_loss = nn.BCELoss()
+		
         # Hyper-parameters from iCaRL
         # the following hyper params whould actualy come from the main 
         self.BATCH_SIZE = 128
         self.WEIGHT_DECAY  = 1e-5
         self.LR = 2
         self.GAMMA = 0.2 # this allow LR to become 1/5 LR after MILESTONES epochs
+        self.NUM_EPOCHS = 70
+        self.DEVICE = "CUDA"
 
         MILESTONES = [49, 63] # when the LR decreases, according to icarl
         self.optimizer = optim.SGD(self.parameters(), lr=self.LR, weight_decay=self.WEIGHT_DECAY)
@@ -181,9 +182,8 @@ class ICaRL(nn.Module):
     # 6 - run network training, with loss function
     optimizer = self.optimizer
 
-# to implement!
-"""    # 
-    #cudnn.benchmark # Calling this optimizes runtime
+
+    cudnn.benchmark # Calling this optimizes runtime
     #current_step = 0
     for epoch in range(NUM_EPOCHS):
         for indices, images, labels in loader:
@@ -196,7 +196,24 @@ class ICaRL(nn.Module):
             optimizer.zero_grad() # Zero-ing the gradients
 
             # Forward pass to the network
-            outputs = self.forward(images)"""
+            outputs = self.forward(images)
+
+            # TO CHECK - THIS IS CELoss NOT BCELoss
+            # Classification loss for new classes
+            loss = self.cls_loss(g, labels)
+
+            # Distilation loss for old classes
+            if self.n_known > 0:
+                g = F.sigmoid(g)
+                q_i = q[indices]
+                # to check!
+                for y in range(0,len(self.exemplar_sets)):
+                    distillation += self.dist_loss(g[:,y],qi[:,y])
+                #dist_loss = dist_loss / self.n_known
+                loss += dist_loss
+
+                loss.backward()
+                optimizer.step()
 
 
   # implementation of alg. 5 of icarl paper
