@@ -89,7 +89,7 @@ class CIFAR100(VisionDataset):
         if self.transform is not None:
             img = self.transform(img)
 
-        return img, target
+        return index, img, target
 
     def __len__(self):
         return len(self.data)

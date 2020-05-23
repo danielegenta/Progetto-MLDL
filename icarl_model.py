@@ -113,7 +113,7 @@ class ICaRL(nn.Module):
                     features.append(feature[0])
     """
     loader = DataLoader(tensors,self.BATCH_SIZE,True,drop_last=False) #128 = batch size
-    for images,labels in loader:
+    for _, images, labels in loader:
       images = images.to(DEVICE)
       labels = labels.to(DEVICE)
       feature = self.feature_extractor(images)  #(batchsize, 2048)
@@ -176,10 +176,9 @@ class ICaRL(nn.Module):
 
     # 5 - store network outputs with pre-update parameters => q
     q = torch.zeros(len(dataset), self.n_classes)
-    for images, labels in loader:
+    for indices, images, labels in loader:
         images = images.to(self.DEVICE)
         labels = labels.to(self.DEVICE)
-        indices = CIFAR100.get_indices(labels) #CHECK IF THIS IS OK
         indices = indices.to(self.DEVICE)
         g = nn.functional.sigmoid(self.forward(images))
         q_i = g.data
@@ -192,11 +191,10 @@ class ICaRL(nn.Module):
     cudnn.benchmark # Calling this optimizes runtime
     #current_step = 0
     for epoch in range(NUM_EPOCHS):
-        for images, labels in loader:
+        for indices, images, labels in loader:
             # Bring data over the device of choice
             images = images.to(self.DEVICE)
             labels = labels.to(self.DEVICE)
-            indices = CIFAR100.get_indices(labels) #CHECK IF THIS IS OK
             indices = indices.to(self.DEVICE)
 
             # PyTorch, by default, accumulates gradients after each backward pass
