@@ -217,7 +217,7 @@ class ICaRL(nn.Module):
                 q_i = q[indices]
                 # to check!
                 for y in range(0,len(self.exemplar_sets)):
-                    distillation += self.dist_loss(g[:,y],qi[:,y])
+                    distillation += self.dist_loss(g[:,y],q_i[:,y])
                 #dist_loss = dist_loss / self.n_known
                 loss += dist_loss
 
