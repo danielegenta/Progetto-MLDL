@@ -154,7 +154,6 @@ class ICaRL(nn.Module):
         exemplar_images = P_y
         exemplar_labels = [y] * len(P_y) #i create a vector of labels [class class class ...] for each class in the exemplar set
         dataset.append(exemplar_images, exemplar_labels)
-    return dataset
 
   # just a start to make the test work
   def update_representation(self, dataset, new_classes):
@@ -170,7 +169,7 @@ class ICaRL(nn.Module):
 
     # 4 - combine current train_subset (dataset) with exemplars
     #     to form a new augmented train dataset
-    augmented_dataset = self.augment_dataset_with_exemplars(dataset)
+    self.augment_dataset_with_exemplars(dataset)
 
     # define the loader for the augmented_dataset
     loader = DataLoader(dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
