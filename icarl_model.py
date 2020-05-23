@@ -1,10 +1,10 @@
 """
-	This class implements the main model of iCaRL 
-	and all the methods regarding the exemplars
+    This class implements the main model of iCaRL 
+    and all the methods regarding the exemplars
 
-	from delivery: iCaRL is made up of 2 components
-	- feature extractor (a convolutional NN) => resnet32 optimized on cifar100
-	- classifier => a FC layer OR a non-parametric classifier (NME)
+    from delivery: iCaRL is made up of 2 components
+    - feature extractor (a convolutional NN) => resnet32 optimized on cifar100
+    - classifier => a FC layer OR a non-parametric classifier (NME)
 
     main ref: https://github.com/donlee90/icarl
 """
@@ -22,6 +22,8 @@ from torch.backends import cudnn
 
 
 from Cifar100.resnet import resnet34
+from Cifar100.Dataset.cifar100 import CIFAR100
+
 
 # Hyper Parameters
 # ...
@@ -30,51 +32,51 @@ from Cifar100.resnet import resnet34
 # n_classes: 10 => 100
 class ICaRL(nn.Module):
   def __init__(self, feature_size, n_classes):
-	   	# Network architecture
-	    super(ICaRL, self).__init__()
-	    self.feature_extractor = resnet34()
+    # Network architecture
+    super(ICaRL, self).__init__()
+    self.feature_extractor = resnet34()
 
-	    # this should maybe be changed
-	    self.feature_extractor.fc =\
-	        nn.Linear(self.feature_extractor.fc.in_features, feature_size)
-	    self.bn = nn.BatchNorm1d(feature_size, momentum=0.01)
-	    self.ReLU = nn.ReLU()
-	    self.fc = nn.Linear(feature_size, n_classes)
+    # this should maybe be changed
+    self.feature_extractor.fc =\
+        nn.Linear(self.feature_extractor.fc.in_features, feature_size)
+    self.bn = nn.BatchNorm1d(feature_size, momentum=0.01)
+    self.ReLU = nn.ReLU()
+    self.fc = nn.Linear(feature_size, n_classes)
 
-	    self.n_classes = n_classes
-	    self.n_known = 0
+    self.n_classes = n_classes
+    self.n_known = 0
 
 
-        
+    
 
-	    # List containing exemplar_sets
-	    # Each exemplar_set is a np.array of N images
-	    # with shape (N, C, H, W)
-	    self.exemplar_sets = []
+    # List containing exemplar_sets
+    # Each exemplar_set is a np.array of N images
+    # with shape (N, C, H, W)
+    self.exemplar_sets = []
 
-	    # Learning method
-	    
-	    self.cls_loss = nn.CrossEntropyLoss()
-	    self.dist_loss = nn.BCELoss()
-		
-        # Hyper-parameters from iCaRL
-        # the following hyper params whould actualy come from the main 
-        self.BATCH_SIZE = 128
-        self.WEIGHT_DECAY  = 1e-5
-        self.LR = 2
-        self.GAMMA = 0.2 # this allow LR to become 1/5 LR after MILESTONES epochs
-        self.NUM_EPOCHS = 70
-        self.DEVICE = "CUDA"
+    # Learning method
+    
+    self.cls_loss = nn.CrossEntropyLoss()
+    self.dist_loss = nn.BCELoss()
+    
+    # Hyper-parameters from iCaRL
+    # the following hyper params whould actualy come from the main 
+    self.BATCH_SIZE = 128
+    self.WEIGHT_DECAY  = 1e-5
+    self.LR = 2
+    self.GAMMA = 0.2 # this allow LR to become 1/5 LR after MILESTONES epochs
+    self.NUM_EPOCHS = 70
+    self.DEVICE = "cuda"
 
-        MILESTONES = [49, 63] # when the LR decreases, according to icarl
-        self.optimizer = optim.SGD(self.parameters(), lr=self.LR, weight_decay=self.WEIGHT_DECAY)
-        self.scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=MILESTONES, gamma=GAMMA)
+    MILESTONES = [49, 63] # when the LR decreases, according to icarl
+    self.optimizer = optim.SGD(self.parameters(), lr=self.LR, weight_decay=self.WEIGHT_DECAY)
+    self.scheduler = optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=MILESTONES, gamma=self.GAMMA)
 
-	    # Means of exemplars
-	    self.compute_means = True
-	    self.exemplar_means = []
+    # Means of exemplars
+    self.compute_means = True
+    self.exemplar_means = []
 
-  	
+    
   def forward(self, x):
     x = self.feature_extractor(x)
     x = self.bn(x)
@@ -112,6 +114,8 @@ class ICaRL(nn.Module):
     """
     loader = DataLoader(tensors,self.BATCH_SIZE,True,drop_last=False) #128 = batch size
     for images,labels in loader:
+      images = images.to(DEVICE)
+      labels = labels.to(DEVICE)
       feature = self.feature_extractor(images)  #(batchsize, 2048)
 
       # is this line important? it yields an error
@@ -125,7 +129,7 @@ class ICaRL(nn.Module):
 
     exemplar_set = []
     exemplar_features = [] # list of Variables of shape (feature_size,)
-    for k in range(1, m + 1):
+    for k in range(1, int(m + 1)):
         S = np.sum(exemplar_features, axis=0) # second addend, features in the exemplar set
         phi = features # first addend, all features
         mu = class_mean # current class mean
@@ -166,18 +170,21 @@ class ICaRL(nn.Module):
 
     # 4 - combine current train_subset (dataset) with exemplars
     #     to form a new augmented train dataset
-    augmented_dataset = augment_dataset_with_exemplars(dataset)
+    augmented_dataset = self.augment_dataset_with_exemplars(dataset)
 
     # define the loader for the augmented_dataset
-    loader = torch.utils.data.DataLoader(dataset, batch_size=self.BATCH_SIZE,
-                                               shuffle=True, num_workers=4)
+    loader = DataLoader(dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
 
     # 5 - store network outputs with pre-update parameters => q
     q = torch.zeros(len(dataset), self.n_classes)
     for images, labels in loader:
+        images = images.to(self.DEVICE)
+        labels = labels.to(self.DEVICE)
+        indices = CIFAR100.get_indices(labels) #CHECK IF THIS IS OK
+        indices = indices.to(self.DEVICE)
         g = nn.functional.sigmoid(self.forward(images))
         q_i = g.data
-        q[i] = q_i
+        q[indices] = q_i
 
     # 6 - run network training, with loss function
     optimizer = self.optimizer
@@ -186,10 +193,12 @@ class ICaRL(nn.Module):
     cudnn.benchmark # Calling this optimizes runtime
     #current_step = 0
     for epoch in range(NUM_EPOCHS):
-        for indices, images, labels in loader:
+        for images, labels in loader:
             # Bring data over the device of choice
-            images = images.to(DEVICE)
-            labels = labels.to(DEVICE)
+            images = images.to(self.DEVICE)
+            labels = labels.to(self.DEVICE)
+            indices = CIFAR100.get_indices(labels) #CHECK IF THIS IS OK
+            indices = indices.to(self.DEVICE)
 
             # PyTorch, by default, accumulates gradients after each backward pass
             # We need to manually set the gradients to zero before starting a new iteration
