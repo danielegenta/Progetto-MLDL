@@ -100,8 +100,6 @@ class LWF(nn.Module):
     q = torch.zeros(len(dataset), self.n_classes)
     for indices, images, labels in loader:
         images = Variable(images).to(self.DEVICE)
-        labels = self._one_hot_encode(labels, device=self.DEVICE)
-        labels = Variable(labels).to(self.DEVICE)  
         indices = indices.to(self.DEVICE)
         g = nn.functional.sigmoid(self.forward(images))
         q_i = g.data
