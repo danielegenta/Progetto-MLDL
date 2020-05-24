@@ -141,4 +141,3 @@ class CIFAR100(VisionDataset):
     def split_in_train_val_groups(self, n_splits=10, ratio=0.5, seed=None):
         groups = self.split_classes(n_splits=n_splits, seed=seed)
         return self.split_groups_in_train_validation(groups, ratio=ratio, seed=seed)
-    
