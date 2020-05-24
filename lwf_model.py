@@ -85,7 +85,7 @@ class LWF(nn.Module):
 
   def update_representation(self, dataset, new_classes):
     previous_model = copy.deepcopy(self)
-    previous_model.to(DEVICE)
+    previous_model.to(self.DEVICE)
 
     # 3 - increment classes
     #          (add output nodes)
