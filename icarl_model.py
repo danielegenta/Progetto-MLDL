@@ -219,7 +219,7 @@ class ICaRL(nn.Module):
 
             # Distilation loss for old classes
             if self.n_known > 0:
-                g = F.sigmoid(g)
+                # g = F.sigmoid(g)
                 q_i = q[indices]
                 # to check!
                 for y in range(0,len(self.exemplar_sets)):
