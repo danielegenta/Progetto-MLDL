@@ -15,7 +15,7 @@ import copy
 # Hyper Parameters
 # ...
 
-# feature size: 2048
+# feature size: ???
 # n_classes: 10 => 100
 class LWF(nn.Module):
   def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES):
@@ -106,17 +106,17 @@ class LWF(nn.Module):
         q[indices] = q_i
     q = Variable(q).to(self.DEVICE)
 
-    # 6 - run network training, with loss function
     optimizer = self.optimizer
 
     self.to(DEVICE)
-    #current_step = 0
     for epoch in range(NUM_EPOCHS):
         for indices, images, labels in loader:
             # Bring data over the device of choice
             images = Variable(images).to(self.DEVICE)
-            labels = self._one_hot_encode(labels, device=self.DEVICE)
-            labels = Variable(labels).to(self.DEVICE)
+            #labels = self._one_hot_encode(labels, device=self.DEVICE)
+            labels_onehot = nn.functional.one_hot(labels,n_classes)
+            labels_onehot = labels_onehot.type_as(outputs)
+            labels = Variable(labels_onehot).to(self.DEVICE)
             indices = indices.to(self.DEVICE)
 
             # PyTorch, by default, accumulates gradients after each backward pass
@@ -132,12 +132,11 @@ class LWF(nn.Module):
             # Distillation loss for old classes
             # Distilation loss for old classes
             if self.n_known > 0:
-                # g = F.sigmoid(g)
+                g = F.sigmoid(g)
                 q_i = q[indices]
                 # to check!
                 for y in range(0,len(self.exemplar_sets)):
                     dist_loss += self.dist_loss(g[:,y],q_i[:,y])
-                #dist_loss = dist_loss / self.n_known
                 loss += dist_loss
 
             loss.backward()
