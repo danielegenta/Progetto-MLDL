@@ -84,9 +84,9 @@ class LWF(nn.Module):
     return enconded
 
   def update_representation(self, dataset, new_classes):
-    previous_model = copy.deepcopy(self)
-    previous_model.to(self.DEVICE)
-    self.cuda()
+    #previous_model = copy.deepcopy(self)
+    #previous_model.to(self.DEVICE)
+    self.to(DEVICE)
 
     # 3 - increment classes
     #          (add output nodes)
@@ -108,7 +108,7 @@ class LWF(nn.Module):
 
     optimizer = self.optimizer
 
-    self.to(DEVICE)
+
     for epoch in range(NUM_EPOCHS):
         for indices, images, labels in loader:
             # Bring data over the device of choice
