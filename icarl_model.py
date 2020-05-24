@@ -159,7 +159,7 @@ class ICaRL(nn.Module):
         dataset.append(exemplar_images, exemplar_labels)
 
   def _one_hot_encode(self, labels, dtype=None, device=None):
-    enconded = torch.zeros(self.n_known, len(labels), dtype=dtype, device=device)
+    enconded = torch.zeros(self.n_classes, len(labels), dtype=dtype, device=device)
     for i, l in enumerate(labels):
       enconded[i, l] = 1
     return enconded
@@ -215,7 +215,7 @@ class ICaRL(nn.Module):
 
             # TO CHECK - THIS IS CELoss NOT BCELoss
             # Classification loss for new classes
-            loss = sum(self.cls_loss(g[:,y], labels[:,y]) for y in range(self.n_known))
+            loss = sum(self.cls_loss(g[:,y], labels[:,y]) for y in range(self.n_known, self.n_classes))
 
             # Distilation loss for old classes
             if self.n_known > 0:
