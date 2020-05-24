@@ -114,8 +114,6 @@ class LWF(nn.Module):
             # Bring data over the device of choice
             images = Variable(images).to(self.DEVICE)
             #labels = self._one_hot_encode(labels, device=self.DEVICE)
-            labels_onehot = nn.functional.one_hot(labels,n_classes)
-            labels = labels_onehot.type_as(outputs)
             labels = Variable(labels_onehot).to(self.DEVICE)
             indices = indices.to(self.DEVICE)
 
@@ -127,7 +125,9 @@ class LWF(nn.Module):
             outputs = self.forward(images)
 
             # Classification loss for new classes
-            loss = sum(self.cls_loss(g[:,y], labels[:,y]) for y in range(self.n_known, self.n_classes))
+            labels_onehot = nn.functional.one_hot(labels,n_classes)
+            labels_onehot = labels_onehot.type_as(outputs)
+            loss = sum(self.cls_loss(g[:,y], labels_onehot[:,y]) for y in range(self.n_known, self.n_classes))
 
             # Distillation loss for old classes
             # Distilation loss for old classes
