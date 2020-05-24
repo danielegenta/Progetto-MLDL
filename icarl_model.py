@@ -56,7 +56,10 @@ class ICaRL(nn.Module):
 
     # Learning method
     
-    self.cls_loss = nn.CrossEntropyLoss()
+    # for the classification loss we have two alternatives
+    # 1- BCE loss with Logits
+    # 2- BCE loss + sigmoid
+    self.cls_loss = nn.BCEWithLogitsLoss()
     self.dist_loss = nn.BCELoss()
     
     # Hyper-parameters from iCaRL
