@@ -59,8 +59,8 @@ class ICaRL(nn.Module):
     # for the classification loss we have two alternatives
     # 1- BCE loss with Logits
     # 2- BCE loss + sigmoid
-    self.cls_loss = nn.BCEWithLogitsLoss()
-    self.dist_loss = nn.BCELoss()
+    self.cls_loss = nn.BCEWithLogitsLoss(reduction = 'mean')
+    self.dist_loss = nn.BCEWithLogitsLoss(reduction = 'mean')
     
     # Hyper-parameters from iCaRL
     # the following hyper params whould actualy come from the main 
