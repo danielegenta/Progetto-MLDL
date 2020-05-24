@@ -13,6 +13,8 @@ import pandas as pd
 import pickle
 import random
 
+from torch.autograd import Variable
+
 # This is an handler class for the Cifar dataset
 class CIFAR100(VisionDataset):
     """
@@ -87,7 +89,7 @@ class CIFAR100(VisionDataset):
         if self.transform is not None:
             img = self.transform(img)
 
-        return img, target
+        return index, img, target
 
     def __len__(self):
         return len(self.data)
@@ -141,3 +143,7 @@ class CIFAR100(VisionDataset):
     def split_in_train_val_groups(self, n_splits=10, ratio=0.5, seed=None):
         groups = self.split_classes(n_splits=n_splits, seed=seed)
         return self.split_groups_in_train_validation(groups, ratio=ratio, seed=seed)
+
+    # given a tensors returns an image (used in exemplars)
+    #def tensorToImg(self, tensor):
+    #	return Variable(transform(Image.fromarray(img)), volatile=True)
