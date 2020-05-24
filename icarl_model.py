@@ -57,7 +57,7 @@ class ICaRL(nn.Module):
     # Learning method
     
     # for the classification loss we have two alternatives
-    # 1- BCE loss with Logits
+    # 1- BCE loss with Logits (reduction could be mean or sum)
     # 2- BCE loss + sigmoid
     self.cls_loss = nn.BCEWithLogitsLoss(reduction = 'mean')
     self.dist_loss = nn.BCEWithLogitsLoss(reduction = 'mean')
