@@ -213,7 +213,6 @@ class ICaRL(nn.Module):
             # Forward pass to the network
             outputs = self.forward(images)
 
-            # TO CHECK - THIS IS CELoss NOT BCELoss
             # Classification loss for new classes
             loss = sum(self.cls_loss(g[:,y], labels[:,y]) for y in range(self.n_known, self.n_classes))
 
@@ -223,12 +222,12 @@ class ICaRL(nn.Module):
                 q_i = q[indices]
                 # to check!
                 for y in range(0,len(self.exemplar_sets)):
-                    distillation += self.dist_loss(g[:,y],q_i[:,y])
+                    dist_loss += self.dist_loss(g[:,y],q_i[:,y])
                 #dist_loss = dist_loss / self.n_known
                 loss += dist_loss
 
-                loss.backward()
-                optimizer.step()
+            loss.backward()
+            optimizer.step()
 
 
   # implementation of alg. 5 of icarl paper
