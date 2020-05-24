@@ -10,7 +10,7 @@ from torch.backends import cudnn
 from torch.autograd import Variable
 from Cifar100.resnet import resnet32
 from Cifar100.Dataset.cifar100 import CIFAR100
-
+import copy
 
 # Hyper Parameters
 # ...
