@@ -158,6 +158,12 @@ class ICaRL(nn.Module):
         exemplar_labels = [y] * len(P_y) #i create a vector of labels [class class class ...] for each class in the exemplar set
         dataset.append(exemplar_images, exemplar_labels)
 
+  def _one_hot_encode(self, labels, dtype=None, device=None):
+    enconded = torch.zeros(self.n_classes, len(labels), dtype=dtype, device=device)
+    for i, l in enumerate(labels):
+      enconded[i, l] = 1
+    return enconded
+
   # just a start to make the test work
   def update_representation(self, dataset, new_classes):
     # 1 - retrieve the classes from the dataset (which is the current train_subset)
@@ -197,7 +203,7 @@ class ICaRL(nn.Module):
         for indices, images, labels in loader:
             # Bring data over the device of choice
             images = images.to(self.DEVICE)
-            labels = labels.to(self.DEVICE)
+            labels = self._one_hot_encode(labels, device=self.DEVICE)
             indices = indices.to(self.DEVICE)
 
             # PyTorch, by default, accumulates gradients after each backward pass
@@ -209,11 +215,11 @@ class ICaRL(nn.Module):
 
             # TO CHECK - THIS IS CELoss NOT BCELoss
             # Classification loss for new classes
-            loss = self.cls_loss(g, labels)
+            loss = sum(self.cls_loss(g[:,y], labels[:,y]) for y in range(self.n_known, self.n_classes))
 
             # Distilation loss for old classes
             if self.n_known > 0:
-                g = F.sigmoid(g)
+                # g = F.sigmoid(g)
                 q_i = q[indices]
                 # to check!
                 for y in range(0,len(self.exemplar_sets)):
