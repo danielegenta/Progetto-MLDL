@@ -115,7 +115,7 @@ class LWF(nn.Module):
             images = Variable(images).to(self.DEVICE)
             #labels = self._one_hot_encode(labels, device=self.DEVICE)
             labels_onehot = nn.functional.one_hot(labels,n_classes)
-            labels_onehot = labels_onehot.type_as(outputs)
+            labels = labels_onehot.type_as(outputs)
             labels = Variable(labels_onehot).to(self.DEVICE)
             indices = indices.to(self.DEVICE)
 
