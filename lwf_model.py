@@ -1,15 +1,3 @@
-"""
-    This class implements the main model of iCaRL 
-    and all the methods regarding the exemplars
-
-    from delivery: iCaRL is made up of 2 components
-    - feature extractor (a convolutional NN) => resnet32 optimized on cifar100
-    - classifier => a FC layer OR a non-parametric classifier (NME)
-
-    main ref: https://github.com/donlee90/icarl
-"""
-
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -19,8 +7,7 @@ import numpy as np
 from PIL import Image
 from torch.utils.data import DataLoader
 from torch.backends import cudnn
-
-
+from torch.autograd import Variable
 from Cifar100.resnet import resnet32
 from Cifar100.Dataset.cifar100 import CIFAR100
 
@@ -32,30 +19,20 @@ from Cifar100.Dataset.cifar100 import CIFAR100
 # n_classes: 10 => 100
 class LWF(nn.Module):
   def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES):
-    # Network architecture
     super(LWF, self).__init__()
     self.feature_extractor = resnet32()
 
-    # this should maybe be changed
-    self.feature_extractor.fc =\
-        nn.Linear(feature_size, n_classes)
-    self.bn = nn.BatchNorm1d(feature_size, momentum=0.01)
+    self.feature_extractor.fc = nn.Linear(self.feature_extractor.fc.in_features,feature_size)
+    #self.bn = nn.BatchNorm1d(feature_size, momentum=0.01)
     self.ReLU = nn.ReLU()
-    self.fc = nn.Linear(feature_size, n_classes)
+    self.fc = nn.Linear(feature_size, n_classes, bias = False)
 
     self.n_classes = n_classes
     self.n_known = 0
 
-    # Learning method
-    
-    # for the classification loss we have two alternatives
-    # 1- BCE loss with Logits (reduction could be mean or sum)
-    # 2- BCE loss + sigmoid
     self.cls_loss = nn.BCEWithLogitsLoss(reduction = 'mean')
     self.dist_loss = nn.BCEWithLogitsLoss(reduction = 'mean')
     
-    # Hyper-parameters from iCaRL
-    # the following hyper params whould actualy come from the main 
     self.BATCH_SIZE = BATCH_SIZE
     self.WEIGHT_DECAY  = WEIGHT_DECAY
     self.LR = LR
@@ -70,7 +47,7 @@ class LWF(nn.Module):
     
   def forward(self, x):
     x = self.feature_extractor(x)
-    x = self.bn(x)
+    #x = self.bn(x)
     x = self.ReLU(x)
     x = self.fc(x)
 
@@ -107,7 +84,9 @@ class LWF(nn.Module):
     return enconded
 
   def update_representation(self, dataset, new_classes):
-    #self.cuda()
+    previous_model = copy.deepcopy(self)
+    previous_model.to(DEVICE)
+
     # 3 - increment classes
     #          (add output nodes)
     #          (update n_classes)
@@ -117,25 +96,27 @@ class LWF(nn.Module):
     loader = DataLoader(dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
 
     # 5 - store network outputs with pre-update parameters => q
-    q = torch.zeros(len(dataset), self.n_classes)
+"""    q = torch.zeros(len(dataset), self.n_classes)
     for indices, images, labels in loader:
-        images = images.to(self.DEVICE)
+        images = Variable(images).to(self.DEVICE)
         labels = labels.to(self.DEVICE)
         indices = indices.to(self.DEVICE)
         g = nn.functional.sigmoid(self.forward(images))
         q_i = g.data
         q[indices] = q_i
+    q = Variable(q).to(self.DEVICE)"""
 
     # 6 - run network training, with loss function
     optimizer = self.optimizer
 
-    cudnn.benchmark # Calling this optimizes runtime
+    self.to(DEVICE)
     #current_step = 0
     for epoch in range(NUM_EPOCHS):
         for indices, images, labels in loader:
             # Bring data over the device of choice
-            images = images.to(self.DEVICE)
+            images = Variable(images).to(self.DEVICE)
             labels = self._one_hot_encode(labels, device=self.DEVICE)
+            labels = labels.to(self.DEVICE)
             indices = indices.to(self.DEVICE)
 
             # PyTorch, by default, accumulates gradients after each backward pass
@@ -162,3 +143,4 @@ class LWF(nn.Module):
             loss.backward()
             optimizer.step()
 
+        scheduler.step() 
