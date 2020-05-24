@@ -23,7 +23,7 @@ class LWF(nn.Module):
     self.feature_extractor = resnet32()
 
     self.feature_extractor.fc = nn.Linear(self.feature_extractor.fc.in_features,feature_size)
-    #self.bn = nn.BatchNorm1d(feature_size, momentum=0.01)
+    self.bn = nn.BatchNorm1d(feature_size, momentum=0.01)
     self.ReLU = nn.ReLU()
     self.fc = nn.Linear(feature_size, n_classes, bias = False)
 
@@ -47,7 +47,7 @@ class LWF(nn.Module):
     
   def forward(self, x):
     x = self.feature_extractor(x)
-    #x = self.bn(x)
+    x = self.bn(x)
     x = self.ReLU(x)
     x = self.fc(x)
 
@@ -102,8 +102,7 @@ class LWF(nn.Module):
         images = Variable(images).to(self.DEVICE)
         indices = indices.to(self.DEVICE)
         g = nn.functional.sigmoid(self.forward(images))
-        q_i = g.data
-        q[indices] = q_i
+        q[indices] = g.data
     q = Variable(q).to(self.DEVICE)
 
     optimizer = self.optimizer
@@ -114,7 +113,7 @@ class LWF(nn.Module):
             # Bring data over the device of choice
             images = Variable(images).to(self.DEVICE)
             #labels = self._one_hot_encode(labels, device=self.DEVICE)
-            labels = Variable(labels_onehot).to(self.DEVICE)
+            labels = Variable(labels).to(self.DEVICE)
             indices = indices.to(self.DEVICE)
 
             # PyTorch, by default, accumulates gradients after each backward pass
