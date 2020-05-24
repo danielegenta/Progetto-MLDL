@@ -96,7 +96,7 @@ class LWF(nn.Module):
     loader = DataLoader(dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
 
     # 5 - store network outputs with pre-update parameters => q
-"""    q = torch.zeros(len(dataset), self.n_classes)
+    q = torch.zeros(len(dataset), self.n_classes)
     for indices, images, labels in loader:
         images = Variable(images).to(self.DEVICE)
         labels = labels.to(self.DEVICE)
@@ -104,7 +104,7 @@ class LWF(nn.Module):
         g = nn.functional.sigmoid(self.forward(images))
         q_i = g.data
         q[indices] = q_i
-    q = Variable(q).to(self.DEVICE)"""
+    q = Variable(q).to(self.DEVICE)
 
     # 6 - run network training, with loss function
     optimizer = self.optimizer
@@ -142,5 +142,3 @@ class LWF(nn.Module):
 
             loss.backward()
             optimizer.step()
-
-        scheduler.step() 
