@@ -4,6 +4,9 @@ import torchvision
 import torch.nn as nn
 import torch.optim as optim
 
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+
 # These are the default iCaRL hyper-parameters
 def getHyperparams():
 	dictHyperparams = {
@@ -64,11 +67,20 @@ def map_to_outputs(labels, reverse_index):
 	elif type(labels) == torch.Tensor:
 		return reverse_index.getNodes(labels)
 
-def plotAccuracyTrend():
-	pass
+def plotAccuracyTrend(data_plot_line):
+	plt.figure(figsize=(20,7))
+	accuracyDF=pd.DataFrame(data_plot_line, columns = ['Classes','Accuracy'])
+	ax = sns.lineplot(x="Classes", y="Accuracy",data=accuracyDF)
+	plt.title("All Group Sequential Accuracy")
+	plt.show()
 
-def plotConfusionMatrix():
-	pass
+def plotConfusionMatrix(confusionMatrixData):
+	fig,ax=plt.subplots(figsize=(7,5))
+	sns.heatmap(confusionMatrixData,cmap='terrain',ax=ax)
+	plt.ylabel('True label')
+	plt.xlabel('Predicted label')
+	plt.show()
+
 
 
 
