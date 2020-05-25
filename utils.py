@@ -45,8 +45,8 @@ def getLossCriterion():
 	criterion = nn.BCEWithLogitsLoss() # for classification: Cross Entropy
 	return criterion
 
-def computeLoss(criterion, outputs, labels):
-	labels_onehot = nn.functional.one_hot(labels,len(set(labels)))
+def computeLoss(criterion, outputs, labels, num_classes):
+	labels_onehot = nn.functional.one_hot(labels, num_classes)
 	labels_onehot = labels_onehot.type_as(outputs)
 
 	return criterion(outputs, labels_onehot)
