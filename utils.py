@@ -48,10 +48,6 @@ def getLossCriterion():
 def computeLoss(criterion, outputs, labels, num_classes):
 	labels_onehot = nn.functional.one_hot(labels, num_classes)
 	labels_onehot = labels_onehot.type_as(outputs)
-
-	if (num_classes == 10):
-		print(len(labels_onehot))
-
 	return criterion(outputs, labels_onehot)
 
 def plotAccuracyTrend():
