@@ -46,12 +46,10 @@ def getLossCriterion():
 	return criterion
 
 def computeLoss(criterion, outputs, labels):
-	#case BCEWithLogits
-
 	labels_onehot = nn.functional.one_hot(labels,100)
-    labels_onehot = labels_onehot.type_as(outputs)
+	labels_onehot = labels_onehot.type_as(outputs)
 
-    return criterion(outputs, labels)
+	return criterion(outputs, labels)
 
 def plotAccuracyTrend():
 	pass
