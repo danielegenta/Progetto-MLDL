@@ -7,16 +7,15 @@ import torch.optim as optim
 # These are the default iCaRL hyper-parameters
 def getHyperparams():
 	dictHyperparams = {
-		"LR": 2,
-		"MOMENTUM": 0.9,
-		"WEIGHT_DECAY": 1e-5,
-		"NUM_EPOCHS": 70,
-		"MILESTONES": [49, 63]
-		"BATCH-SIZE": 128,
+		"LR": [2],
+		"MOMENTUM": [0.9],
+		"WEIGHT_DECAY": [1e-5],
+		"NUM_EPOCHS": [70],
+		"MILESTONES": [49, 63],
+		"BATCH-SIZE": [128],
 		"DEVICE": 'cuda',
-		"GAMMA": 0.2,
-		"DATA_DIR": 'DATA'
-		"SEED": 30
+		"GAMMA": [0.2],
+		"SEED": [30]
 	}
 	return dictHyperparams
 
@@ -43,4 +42,10 @@ def getTransfomrations():
 def getLossCriterion():
 	criterion = nn.BCEWithLogitsLoss() # for classification: Cross Entropy
 	return criterion
+
+def plotAccuracyTrend():
+	pass
+
+def plotConfusionMatrix():
+	pass
 
