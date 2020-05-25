@@ -12,7 +12,7 @@ def getHyperparams():
 		"WEIGHT_DECAY": 1e-5,
 		"NUM_EPOCHS": 70,
 		"MILESTONES": [49, 63],
-		"BATCH-SIZE": 128,
+		"BATCH_SIZE": 128,
 		"DEVICE": 'cuda',
 		"GAMMA": 0.2,
 		"SEED": 30,
@@ -42,12 +42,22 @@ def getTransfomrations():
 	return train_transform, eval_transform
 
 def getLossCriterion():
-	criterion = nn.CrossEntropyLoss() # for classification: Cross Entropy
+	criterion = nn.BCEWithLogitsLoss() # for classification: Cross Entropy
 	return criterion
+
+def computeLoss(criterion, outputs, labels):
+	#case BCEWithLogits
+
+	labels_onehot = nn.functional.one_hot(labels,100)
+    labels_onehot = labels_onehot.type_as(outputs)
+
+    return criterion(outputs, labels)
 
 def plotAccuracyTrend():
 	pass
 
 def plotConfusionMatrix():
 	pass
+
+
 
