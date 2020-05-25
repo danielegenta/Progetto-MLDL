@@ -46,7 +46,7 @@ def getLossCriterion():
 	return criterion
 
 def computeLoss(criterion, outputs, labels):
-	labels_onehot = nn.functional.one_hot(labels,10)
+	labels_onehot = nn.functional.one_hot(labels,len(labels))
 	labels_onehot = labels_onehot.type_as(outputs)
 
 	return criterion(outputs, labels_onehot)
