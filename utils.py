@@ -49,7 +49,7 @@ def computeLoss(criterion, outputs, labels, num_classes):
 	labels_onehot = nn.functional.one_hot(labels, num_classes)
 	labels_onehot = labels_onehot.type_as(outputs)
 
-	if (num_classes == 20)
+	if (num_classes == 20):
 		print(labels_onehot)
 
 	return criterion(outputs, labels_onehot)
