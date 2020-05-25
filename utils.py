@@ -4,7 +4,6 @@ import torchvision
 import torch.nn as nn
 import torch.optim as optim
 
-from sklearn.metrics import confusion_matrix
 import seaborn as sns
 
 # These are the default iCaRL hyper-parameters
