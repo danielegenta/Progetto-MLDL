@@ -45,10 +45,16 @@ def getLossCriterion():
 	criterion = nn.BCEWithLogitsLoss() # for classification: Cross Entropy
 	return criterion
 
-def computeLoss(criterion, outputs, labels, num_classes):
-	labels_onehot = nn.functional.one_hot(labels, num_classes)
-	labels_onehot = labels_onehot.type_as(outputs)
-	return criterion(outputs, labels_onehot)
+def computeLoss(criterion, outputs, labels):
+	return criterion(outputs, labels)
+
+def _one_hot_encode(labels, n_classes, dtype=None, device=None):
+	batch_size = len(labels)
+	enconded = torch.zeros(batch_size, self.n_classes, dtype=dtype, device=device)
+	labels=self.map_to_outputs(labels)
+	for i, l in enumerate(labels):
+	  enconded[i, l] = 1
+	return enconded
 
 def plotAccuracyTrend():
 	pass
