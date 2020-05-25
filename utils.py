@@ -48,13 +48,21 @@ def getLossCriterion():
 def computeLoss(criterion, outputs, labels):
 	return criterion(outputs, labels)
 
-def _one_hot_encode(labels, n_classes, dtype=None, device=None):
+def _one_hot_encode(labels, n_classes, reverse_index, dtype=None, device=None):
 	batch_size = len(labels)
-	enconded = torch.zeros(batch_size, self.n_classes, dtype=dtype, device=device)
-	labels=self.map_to_outputs(labels)
+	enconded = torch.zeros(batch_size, n_classes, dtype=dtype, device=device)
+	labels=map_to_outputs(labels, reverse_index)
 	for i, l in enumerate(labels):
 	  enconded[i, l] = 1
 	return enconded
+
+def map_to_outputs(labels, reverse_index):
+	if reverse_index is None:
+	  return labels
+	if type(labels) == int:
+	  return int(self.reverse_index.getNodes(torch.tensor([labels])))
+	elif type(labels) == torch.Tensor:
+	return self.reverse_index.getNodes(labels)
 
 def plotAccuracyTrend():
 	pass
