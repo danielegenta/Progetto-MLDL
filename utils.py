@@ -62,7 +62,7 @@ def map_to_outputs(labels, reverse_index):
 	if type(labels) == int:
 	  return int(reverse_index.getNodes(torch.tensor([labels])))
 	elif type(labels) == torch.Tensor:
-	return reverse_index.getNodes(labels)
+		return reverse_index.getNodes(labels)
 
 def plotAccuracyTrend():
 	pass
