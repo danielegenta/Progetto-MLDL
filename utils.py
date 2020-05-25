@@ -42,13 +42,13 @@ def getTransfomrations():
 	return train_transform, eval_transform
 
 def getLossCriterion():
-	criterion = nn.BCEWithLogitsLoss() # for classification: Cross Entropy
+	criterion = nn.BCEWithLogitsLoss(reduction = 'mean') # for classification: Cross Entropy
 	return criterion
 
 def computeLoss(criterion, outputs, labels):
 	return criterion(outputs, labels)
 
-def _one_hot_encode(labels, n_classes, reverse_index, dtype=None, device=None):
+def _one_hot_encode(labels, n_classes, reverse_index, dtype=None, device='cuda'):
 	batch_size = len(labels)
 	enconded = torch.zeros(batch_size, n_classes, dtype=dtype, device=device)
 	labels=map_to_outputs(labels, reverse_index)
