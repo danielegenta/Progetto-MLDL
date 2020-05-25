@@ -49,7 +49,7 @@ def computeLoss(criterion, outputs, labels):
 	labels_onehot = nn.functional.one_hot(labels,100)
 	labels_onehot = labels_onehot.type_as(outputs)
 
-	return criterion(outputs, labels)
+	return criterion(outputs, labels_onehot)
 
 def plotAccuracyTrend():
 	pass
