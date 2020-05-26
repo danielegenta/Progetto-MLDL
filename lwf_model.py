@@ -102,7 +102,7 @@ class LWF(nn.Module):
     """
 
     net = self.feature_extractor
-    net = net.to(DEVICE)
+    net = net.to(self.DEVICE)
 
     optimizer = self.optimizer
     scheduler = self.scheduler
