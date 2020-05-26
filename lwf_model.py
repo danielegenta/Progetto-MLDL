@@ -89,7 +89,8 @@ class LWF(nn.Module):
     loader = DataLoader(dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
 
     # 5 - store network outputs with pre-update parameters => q
-    q = torch.zeros(len(dataset), self.n_classes).to('cuda')
+    self.to(self.DEVICE)
+    q = torch.zeros(len(dataset), self.n_classes).to(SELF.DEVICE)
     for indices, images, labels in loader:
         images = images.to(self.DEVICE)
         indices = indices.to(self.DEVICE)
