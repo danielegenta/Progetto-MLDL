@@ -1,3 +1,10 @@
+"""
+This is a wrapper of methods used commonly across our various models
+such as: finetuning, icarl, lwf.
+By centralizing them we make the code more efficient and less prone to errors.
+"""
+
+
 from torchvision import transforms
 import torch
 import torchvision
@@ -31,6 +38,8 @@ def getOptimizerScheduler(LR, MOMENTUM, WEIGHT_DECAY, MILESTONES, GAMMA, paramet
 	scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=MILESTONES, gamma=GAMMA, last_epoch=-1) 
 	return optimizer, scheduler
 
+# the mean and the std have been found on the web as mean and std of cifar100
+# alternative (realistic): compute mean and std for the dataset
 def getTransformations():
 	# Define transforms for training phase
 	train_transform = transforms.Compose([transforms.RandomHorizontalFlip(), # Randomly flip the image with probability of 0.5
@@ -46,6 +55,7 @@ def getTransformations():
 	])
 	return train_transform, eval_transform
 
+# BCEWithLogits = Sigmoid + BCE, is the loss used in iCaRL
 def getLossCriterion():
 	criterion = nn.BCEWithLogitsLoss(reduction = 'mean') # for classification: Cross Entropy
 	return criterion
@@ -53,6 +63,7 @@ def getLossCriterion():
 def computeLoss(criterion, outputs, labels):
 	return criterion(outputs, labels)
 
+# support BCE
 def _one_hot_encode(labels, n_classes, reverse_index, dtype=None, device='cuda'):
 	batch_size = len(labels)
 	enconded = torch.zeros(batch_size, n_classes, dtype=dtype, device=device)
@@ -83,7 +94,10 @@ def plotConfusionMatrix(confusionMatrixData):
 	plt.xlabel('Predicted label')
 	plt.show()
 
-def writeMetrics(method, seed, accuracies,confusionMatrixData):
+# Write down the metrics (accuracy trand and confusion matrix)
+# this method is a shortcut when perfoming multiple tests with different splits (random_seed)
+# and allow us to plot on the same graph the data from multiple models (accuracy)
+def writeMetrics(method, seed, accuracies, confusionMatrixData):
   data = {}
   data['accuracies'] = []
   data['cm'] = [] #cm line
