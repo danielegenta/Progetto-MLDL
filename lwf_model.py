@@ -125,6 +125,8 @@ class LWF(nn.Module):
             # Forward pass to the network
             g = self.forward(images)
 
+            labels_one_hot.type_as(g)
+
             # Classification loss for new classes
             #loss = sum(self.cls_loss(g[:,y], labels_one_hot[:,y]) for y in range(self.n_known, self.n_classes))
             
