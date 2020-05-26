@@ -86,6 +86,7 @@ def plotConfusionMatrix(confusionMatrixData):
 
 # write accuracies and confusion matrix utils data 
 # into a json file
+"""
 def writeMetrics(method, seed, accuracies, cm_preds, cm_groundtruth):
 	classes = range(10, 100, 10)
 	data = {}
@@ -106,5 +107,6 @@ def writeMetrics(method, seed, accuracies, cm_preds, cm_groundtruth):
 	# write file
 	with open(filename, 'w') as outfile:
     	json.dump(data, outfile)
+"""
 
 
