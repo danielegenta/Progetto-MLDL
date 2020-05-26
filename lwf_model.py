@@ -89,7 +89,6 @@ class LWF(nn.Module):
     # define the loader for the augmented_dataset
     loader = DataLoader(dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
 
-    self.cuda()
     # 5 - store network outputs with pre-update parameters => q
     q = torch.zeros(len(dataset), self.n_classes).to(self.DEVICE)
     for indices, images, labels in loader:
@@ -97,6 +96,9 @@ class LWF(nn.Module):
         indices = indices.to(self.DEVICE)
         g = torch.sigmoid(self.forward(images))
         q[indices] = g.data
+
+    net = self.net
+    net = net.to(DEVICE)
 
     optimizer = self.optimizer
     scheduler = self.scheduler
@@ -116,8 +118,9 @@ class LWF(nn.Module):
             #labels = self._one_hot_encode(labels, device=self.DEVICE)
             labels = labels.to(self.DEVICE)
             indices = indices.to(self.DEVICE)
+            net.train()
             labels_one_hot = utils._one_hot_encode(labels,self.n_classes, self.reverse_index, device=self.DEVICE)
-            
+
             # PyTorch, by default, accumulates gradients after each backward pass
             # We need to manually set the gradients to zero before starting a new iteration
             optimizer.zero_grad() # Zero-ing the gradients
@@ -154,6 +157,7 @@ class LWF(nn.Module):
     self.feature_extractor = copy.deepcopy(net)
     self.fc = copy.deepcopy(net)
     self.fc.linear = nn.Sequential()
+    del net
     torch.no_grad()
     torch.cuda.empty_cache()
 
