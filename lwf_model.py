@@ -17,7 +17,7 @@ from Cifar100 import utils
 # feature size: ???
 # n_classes: 10 => 100
 class LWF(nn.Module):
-  def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES, reverse_index = None):
+  def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM, reverse_index = None):
     super(LWF, self).__init__()
     self.feature_extractor = resnet32()
 
@@ -39,6 +39,7 @@ class LWF(nn.Module):
     self.NUM_EPOCHS = NUM_EPOCHS
     self.DEVICE = DEVICE
     self.MILESTONES = MILESTONES # when the LR decreases, according to icarl
+    self.MOMENTUM = MOMENTUM
     
     self.optimizer, self.scheduler = utils.utils.getOptimizerScheduler(LR, MOMENTUM, WEIGHT_DECAY, MILESTONES, GAMMA, self.parameters)
     self.reverse_index=reverse_index
