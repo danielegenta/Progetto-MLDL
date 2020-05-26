@@ -130,12 +130,13 @@ class LWF(nn.Module):
             
             # test
             if self.n_known == 0:
-                loss = criterion(g, labels_onehot)
+                loss = criterion(g, labels_one_hot)
             elif self.n_known > 0:
                 #g = F.sigmoid(g)
                 q_i = q[indices]
                 # to check!
                 #dist_loss = sum(self.dist_loss(g[:,y],q_i[:,y]) for y in range(0, self.n_known))
+                labels_onehot = labels_one_hot.type_as(g)[:,self.n_known:]
                 out_old = Variable(torch.sigmoid(old_net(images))[:,:self.n_known],requires_grad = False)
                 target = torch.cat((out_old, labels_one_hot),dim=1)
                 loss = criterion(g,target)
