@@ -96,7 +96,7 @@ class LWF(nn.Module):
         g = torch.sigmoid(self.forward(images))
         q[indices] = g.data
 
-    optimizer, scheduler = utils.getOptimizerScheduler(LR, MOMENTUM, WEIGHT_DECAY, MILESTONES, GAMMA, self.parameters)
+    optimizer, scheduler = utils.getOptimizerScheduler(self.LR, self.MOMENTUM, self.WEIGHT_DECAY, self.MILESTONES, self.GAMMA, self.parameters)
 
     cudnn.benchmark # Calling this optimizes runtime
     for epoch in range(NUM_EPOCHS):
