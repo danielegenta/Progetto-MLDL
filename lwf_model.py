@@ -22,7 +22,7 @@ class LWF(nn.Module):
     super(LWF, self).__init__()
     self.feature_extractor = resnet32()
     #self.feature_extractor.fc = nn.Linear(self.feature_extractor.fc.in_features,feature_size)
-    self.feature_extractor.fc = nn.Linear(512, feature_size)
+    self.feature_extractor.fc = nn.Linear(self.feature_extractor.fc.in_features,feature_size)
     #self.bn = nn.BatchNorm1d(feature_size, momentum=MOMENTUM)
     self.ReLU = nn.ReLU()
 
