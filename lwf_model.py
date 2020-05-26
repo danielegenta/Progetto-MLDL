@@ -110,7 +110,7 @@ class LWF(nn.Module):
             #labels = self._one_hot_encode(labels, device=self.DEVICE)
             labels = labels.to(self.DEVICE)
             indices = indices.to(self.DEVICE)
-            labels = utils._one_hot_encode(labels, self.reverse_index, device=self.DEVICE)
+            labels = utils._one_hot_encode(labels,self.num_classes, self.reverse_index, device=self.DEVICE)
             
             # PyTorch, by default, accumulates gradients after each backward pass
             # We need to manually set the gradients to zero before starting a new iteration
