@@ -3,11 +3,11 @@ import torch
 import torchvision
 import torch.nn as nn
 import torch.optim as optim
-
 import seaborn as sns
 import json
-
+import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 # These are the default iCaRL hyper-parameters
 def getHyperparams():
@@ -31,7 +31,7 @@ def getOptimizerScheduler(LR, MOMENTUM, WEIGHT_DECAY, MILESTONES, GAMMA, paramet
 	scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=MILESTONES, gamma=GAMMA, last_epoch=-1) 
 	return optimizer, scheduler
 
-def getTransfomrations():
+def getTransformations():
 	# Define transforms for training phase
 	train_transform = transforms.Compose([transforms.RandomHorizontalFlip(), # Randomly flip the image with probability of 0.5
 	                                      transforms.Pad(4), # Add padding
@@ -77,36 +77,30 @@ def plotAccuracyTrend(data_plot_line):
 	plt.show()
 
 def plotConfusionMatrix(confusionMatrixData):
-	confusionMatrixData = confusion_matrix(all_labels_cm, all_preds_cm)
 	fig,ax=plt.subplots(figsize=(7,5))
 	sns.heatmap(confusionMatrixData,cmap='terrain',ax=ax)
 	plt.ylabel('True label')
 	plt.xlabel('Predicted label')
 	plt.show()
 
-# write accuracies and confusion matrix utils data 
-# into a json file
-"""
-def writeMetrics(method, seed, accuracies, cm_preds, cm_groundtruth):
-	classes = range(10, 100, 10)
-	data = {}
-	data['accuracies'] = []
-	data['confusion_matrix_preds'] = [] 
-	data['confusion_matrix_groundtruth'] = [] 
-	index = 0
-	for classes_seen in classes:
-		data['accuracies'].append({classes_seen : accuracies[i]})
-		#data['confusion_matrix_groundtruth'].append({classes_seen : cm_groundtruth[i]})
-		#data['confusion_matrix_preds'].append({classes_seen : cm_preds[i]})
-		index += 1
+def writeMetrics(method, seed, accuracies,confusionMatrixData):
+  data = {}
+  data['accuracies'] = []
+  data['cm'] = [] #cm line
+  i = 0
+  for classes_seen in range(10, 110, 10):
+    data['accuracies'].append({classes_seen : accuracies[i]}) 
+    i += 1
 
-	# ex. filename = data_finetuning_30, where 30 is the random seed
-	aus = method + "_" + str(seed)
-	filename = 'data_{}.txt'.format(aus)
-
-	# write file
-	with open(filename, 'w') as outfile:
-    	json.dump(data, outfile)
-"""
+  i = 0
+  for classes_seen in range(0, 100, 1):
+    data['cm'].append({classes_seen : confusionMatrixData[i].tolist()}) 
+    i += 1
+  
+  # dump to file
+  aus = method + '_' + str(seed)
+  filename = 'data_{}'.format(aus)
+  with open(filename, 'w') as f:
+    json.dump(data, f)
 
 
