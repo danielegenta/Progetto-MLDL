@@ -104,7 +104,7 @@ class LWF(nn.Module):
     # test
     criterion = utils.getLossCriterion()
 
-    if len(self.n_known) > 0:
+    if self.n_known > 0:
         old_net = copy.deepcopy(self.feature_extractor) #copy network before training
 
     cudnn.benchmark # Calling this optimizes runtime
