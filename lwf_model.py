@@ -128,7 +128,7 @@ class LWF(nn.Module):
                 #g = F.sigmoid(g)
                 q_i = q[indices]
                 # to check!
-                distillation = sum(self.dist_loss(g[:,y],q_i[:,y]) for y in range(0, self.n_known))
+                dist_loss = sum(self.dist_loss(g[:,y],q_i[:,y]) for y in range(0, self.n_known))
 
                 loss += dist_loss
 
