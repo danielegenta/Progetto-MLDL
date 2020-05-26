@@ -101,7 +101,7 @@ def writeMetrics(method, seed, accuracies, cm_preds, cm_groundtruth):
 
 	# ex. filename = data_finetuning_30, where 30 is the random seed
 	aus = method + "_" + str(seed)
-	string filename = 'data_{}.txt'.format(aus)
+	filename = 'data_{}.txt'.format(aus)
 
 	# write file
 	with open(filename, 'w') as outfile:
