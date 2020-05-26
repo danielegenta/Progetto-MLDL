@@ -11,6 +11,7 @@ from torch.autograd import Variable
 from Cifar100.resnet import resnet32
 from Cifar100.Dataset.cifar100 import CIFAR100
 import copy
+import gc
 
 from Cifar100 import utils
 
@@ -45,6 +46,7 @@ class LWF(nn.Module):
 
     self.optimizer, self.scheduler = utils.getOptimizerScheduler(self.LR, self.MOMENTUM, self.WEIGHT_DECAY, self.MILESTONES, self.GAMMA, self.parameters())
 
+    gc.collect()
     
   def forward(self, x):
     x = self.feature_extractor(x)
@@ -56,6 +58,7 @@ class LWF(nn.Module):
   
   # increment the number of classes considered by the net
   def increment_classes(self, n):
+        gc.collect()
         """Add n classes in the final fc layer"""
         in_features = self.fc.in_features
         out_features = self.fc.out_features
@@ -74,6 +77,7 @@ class LWF(nn.Module):
         """
 
         # for classification, lwf uses the network output values themselves
+        gc.collect()
         _, preds = torch.max(torch.softmax(self.forward(images), dim=1), dim=1, keepdim=False)
         return preds    
 
@@ -84,6 +88,8 @@ class LWF(nn.Module):
     # 3 - increment classes
     #          (add output nodes)
     #          (update n_classes)
+    gc.collect()
+    
     self.increment_classes(len(new_classes))
 
     # define the loader for the augmented_dataset
