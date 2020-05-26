@@ -15,7 +15,7 @@ import gc
 
 from Cifar100 import utils
 
-# feature size: ???
+# feature size: 2048 (currently)
 # n_classes: 10 => 100
 class LWF(nn.Module):
   def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM, reverse_index = None):
@@ -126,14 +126,14 @@ class LWF(nn.Module):
             labels_one_hot = utils._one_hot_encode(labels,self.n_classes, self.reverse_index, device=self.DEVICE)
             # test
             #labels_one_hot = nn.functional.one_hot(labels, self.n_classes)
-            labels_one_hot.type_as(g)
+            labels_one_hot.type_as(outputs)
 
             # Classification loss for new classes            
             if self.n_known == 0:
                 loss = criterion(g, labels_one_hot)
             elif self.n_known > 0:
             
-                labels_one_hot = labels_one_hot.type_as(g)[:,self.n_known:]
+                labels_one_hot = labels_one_hot.type_as(outputs)[:,self.n_known:]
                 out_old = Variable(torch.sigmoid(old_net(images))[:,:self.n_known],requires_grad = False)
                 
                 #[outputold, onehot_new]
