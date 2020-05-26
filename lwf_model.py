@@ -110,7 +110,7 @@ class LWF(nn.Module):
             #labels = self._one_hot_encode(labels, device=self.DEVICE)
             labels = labels.to(self.DEVICE)
             indices = indices.to(self.DEVICE)
-            labels = utils._one_hot_encode(labels,self.n_classes, self.reverse_index, device=self.DEVICE)
+            labels_one_hot = utils._one_hot_encode(labels,self.n_classes, self.reverse_index, device=self.DEVICE)
             
             # PyTorch, by default, accumulates gradients after each backward pass
             # We need to manually set the gradients to zero before starting a new iteration
@@ -120,7 +120,7 @@ class LWF(nn.Module):
             g = self.forward(images)
 
             # Classification loss for new classes
-            loss = sum(self.cls_loss(g[:,y], labels[:,y]) for y in range(self.n_known, self.n_classes))
+            loss = sum(self.cls_loss(g[:,y], labels_one_hot[:,y]) for y in range(self.n_known, self.n_classes))
 
             # Distillation loss for old classes
             # Distilation loss for old classes
