@@ -150,3 +150,10 @@ class LWF(nn.Module):
         scheduler.step()
         print("LOSS: ",loss)
 
+    # Save the trained network and update features extractor
+    self.feature_extractor = copy.deepcopy(net)
+    self.fc = copy.deepcopy(net)
+    self.fc.linear = nn.Sequential()
+    torch.no_grad()
+    torch.cuda.empty_cache()
+
