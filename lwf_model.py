@@ -62,7 +62,7 @@ class LWF(nn.Module):
         out_features = self.fc.out_features
         weight = self.fc.weight.data
 
-        self.fc = nn.Linear(in_features, out_features+n, bias=False)
+        self.fc = nn.Linear(in_features, out_features+n)
         self.fc.weight.data[:out_features] = weight
         self.n_classes += n
 
