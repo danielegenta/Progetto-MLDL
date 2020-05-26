@@ -101,6 +101,12 @@ class LWF(nn.Module):
     optimizer = self.optimizer
     scheduler = self.scheduler
 
+    # test
+    criterion = utils.getLossCriterion()
+
+    if len(self.n_known) > 0:
+        old_net = copy.deepcopy(self.feature_extractor) #copy network before training
+
     cudnn.benchmark # Calling this optimizes runtime
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
@@ -120,17 +126,20 @@ class LWF(nn.Module):
             g = self.forward(images)
 
             # Classification loss for new classes
-            loss = sum(self.cls_loss(g[:,y], labels_one_hot[:,y]) for y in range(self.n_known, self.n_classes))
-
-            # Distillation loss for old classes
-            # Distilation loss for old classes
-            if self.n_known > 0:
+            #loss = sum(self.cls_loss(g[:,y], labels_one_hot[:,y]) for y in range(self.n_known, self.n_classes))
+            
+            # test
+            if self.n_known == 0:
+                loss = criterion(outputs, labels_onehot)
+            elif self.n_known > 0:
                 #g = F.sigmoid(g)
                 q_i = q[indices]
                 # to check!
-                dist_loss = sum(self.dist_loss(g[:,y],q_i[:,y]) for y in range(0, self.n_known))
-
-                loss += dist_loss
+                #dist_loss = sum(self.dist_loss(g[:,y],q_i[:,y]) for y in range(0, self.n_known))
+                out_old = Variable(torch.sigmoid(old_net(images))[:,:self.n_known],requires_grad = False)
+                target = torch.cat((out_old,labels_one_hot),dim=1)
+                loss = criterion(outputs,target)
+                #loss += dist_loss
 
             loss.backward()
             optimizer.step()
