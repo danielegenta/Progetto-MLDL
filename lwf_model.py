@@ -21,11 +21,12 @@ class LWF(nn.Module):
   def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM, reverse_index = None):
     super(LWF, self).__init__()
     self.feature_extractor = resnet32()
-
     self.feature_extractor.fc = nn.Linear(self.feature_extractor.fc.in_features,feature_size)
-    self.bn = nn.BatchNorm1d(feature_size, momentum=MOMENTUM)
-    self.ReLU = nn.ReLU()
-    self.fc = nn.Linear(feature_size, n_classes, bias = False)
+   
+    #self.bn = nn.BatchNorm1d(feature_size, momentum=MOMENTUM)
+    #self.ReLU = nn.ReLU()
+
+    self.fc = nn.Linear(feature_size, n_classes)
 
     self.n_classes = n_classes
     self.n_known = 0
@@ -47,7 +48,7 @@ class LWF(nn.Module):
     
   def forward(self, x):
     x = self.feature_extractor(x)
-    x = self.bn(x)
+    #x = self.bn(x)
     x = self.ReLU(x)
     x = self.fc(x)
 
