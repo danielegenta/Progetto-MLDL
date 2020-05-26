@@ -21,12 +21,11 @@ class LWF(nn.Module):
   def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM, reverse_index = None):
     super(LWF, self).__init__()
     self.feature_extractor = resnet32()
-    #self.feature_extractor.fc = nn.Linear(self.feature_extractor.fc.in_features,feature_size)
     self.feature_extractor.fc = nn.Linear(self.feature_extractor.fc.in_features,feature_size)
-    #self.bn = nn.BatchNorm1d(feature_size, momentum=MOMENTUM)
+    self.bn = nn.BatchNorm1d(feature_size, momentum=MOMENTUM)
     self.ReLU = nn.ReLU()
 
-    self.fc = nn.Linear(feature_size, n_classes)
+    self.fc = nn.Linear(feature_size, n_classes, bias = False)
 
     self.n_classes = n_classes
     self.n_known = 0
@@ -48,7 +47,7 @@ class LWF(nn.Module):
     
   def forward(self, x):
     x = self.feature_extractor(x)
-    #x = self.bn(x)
+    x = self.bn(x)
     x = self.ReLU(x)
     x = self.fc(x)
 
@@ -62,7 +61,7 @@ class LWF(nn.Module):
         out_features = self.fc.out_features
         weight = self.fc.weight.data
 
-        self.fc = nn.Linear(in_features, out_features+n)
+        self.fc = nn.Linear(in_features, out_features + n, bias = False)
         self.fc.weight.data[:out_features] = weight
         self.n_classes += n
 
@@ -116,15 +115,17 @@ class LWF(nn.Module):
             labels = labels.to(self.DEVICE)
             indices = indices.to(self.DEVICE)
             net.train()
-            labels_one_hot = utils._one_hot_encode(labels,self.n_classes, self.reverse_index, device=self.DEVICE)
 
             # PyTorch, by default, accumulates gradients after each backward pass
             # We need to manually set the gradients to zero before starting a new iteration
             optimizer.zero_grad() # Zero-ing the gradients
 
             # Forward pass to the network
-            g = self.forward(images)
+            outputs = self.forward(images)
 
+            labels_one_hot = utils._one_hot_encode(labels,self.n_classes, self.reverse_index, device=self.DEVICE)
+            # test
+            #labels_one_hot = nn.functional.one_hot(labels, self.n_classes)
             labels_one_hot.type_as(g)
 
             # Classification loss for new classes            
