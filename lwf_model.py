@@ -146,7 +146,8 @@ class LWF(nn.Module):
                 # to check!
                 #dist_loss = sum(self.dist_loss(g[:,y],q_i[:,y]) for y in range(0, self.n_known))
                 labels_one_hot = labels_one_hot.type_as(g)[:,self.n_known:]
-                out_old = Variable(torch.sigmoid(old_net(images))[:,:self.n_known],requires_grad = False)
+                #out_old = Variable(torch.sigmoid(old_net(images))[:,:self.n_known],requires_grad = False)
+                out_old = Variable(old_net(images)[:,:self.n_known],requires_grad = False)
                 target = torch.cat((out_old, labels_one_hot),dim=1)
                 loss = criterion(g,target)
                 #loss += dist_loss
