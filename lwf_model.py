@@ -87,6 +87,7 @@ class LWF(nn.Module):
     # define the loader for the augmented_dataset
     loader = DataLoader(dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
 
+    self.to(self.DEVICE)
     # 5 - store network outputs with pre-update parameters => q
     q = torch.zeros(len(dataset), self.n_classes).to(self.DEVICE)
     for indices, images, labels in loader:
