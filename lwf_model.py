@@ -41,7 +41,7 @@ class LWF(nn.Module):
     self.MILESTONES = MILESTONES # when the LR decreases, according to icarl
     self.MOMENTUM = MOMENTUM
     
-    self.optimizer, self.scheduler = utils.utils.getOptimizerScheduler(LR, MOMENTUM, WEIGHT_DECAY, MILESTONES, GAMMA, self.parameters)
+    self.optimizer, self.scheduler = utils.getOptimizerScheduler(LR, MOMENTUM, WEIGHT_DECAY, MILESTONES, GAMMA, self.parameters)
     self.reverse_index=reverse_index
 
     
