@@ -23,8 +23,9 @@ class LWF(nn.Module):
     self.feature_extractor = resnet32()
     self.feature_extractor.fc = nn.Linear(self.feature_extractor.fc.in_features,feature_size)
    
+    print(self.feature_extractor.fc.in_features)
     #self.bn = nn.BatchNorm1d(feature_size, momentum=MOMENTUM)
-    #self.ReLU = nn.ReLU()
+    self.ReLU = nn.ReLU()
 
     self.fc = nn.Linear(feature_size, n_classes)
 
