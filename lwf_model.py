@@ -41,7 +41,6 @@ class LWF(nn.Module):
     self.MILESTONES = MILESTONES # when the LR decreases, according to icarl
     self.MOMENTUM = MOMENTUM
     
-    self.optimizer, self.scheduler = utils.getOptimizerScheduler(LR, MOMENTUM, WEIGHT_DECAY, MILESTONES, GAMMA, self.parameters)
     self.reverse_index=reverse_index
 
     
@@ -97,7 +96,7 @@ class LWF(nn.Module):
         g = torch.sigmoid(self.forward(images))
         q[indices] = g.data
 
-    optimizer = self.optimizer
+    optimizer, scheduler = utils.getOptimizerScheduler(LR, MOMENTUM, WEIGHT_DECAY, MILESTONES, GAMMA, self.parameters)
 
     cudnn.benchmark # Calling this optimizes runtime
     for epoch in range(NUM_EPOCHS):
