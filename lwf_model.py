@@ -102,7 +102,7 @@ class LWF(nn.Module):
     scheduler = self.scheduler
 
     cudnn.benchmark # Calling this optimizes runtime
-    for epoch in range(NUM_EPOCHS):
+    for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
         for indices, images, labels in loader:
             # Bring data over the device of choice
@@ -110,7 +110,7 @@ class LWF(nn.Module):
             #labels = self._one_hot_encode(labels, device=self.DEVICE)
             labels = labels.to(self.DEVICE)
             indices = indices.to(self.DEVICE)
-            labels = utils._one_hot_encode(labels, reverse_index, device=self.DEVICE)
+            labels = utils._one_hot_encode(labels, self.reverse_index, device=self.DEVICE)
             
             # PyTorch, by default, accumulates gradients after each backward pass
             # We need to manually set the gradients to zero before starting a new iteration
