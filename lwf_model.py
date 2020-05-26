@@ -103,7 +103,8 @@ class LWF(nn.Module):
     criterion = utils.getLossCriterion()
 
     if self.n_known > 0:
-        old_net = copy.deepcopy(self.feature_extractor) #copy network before training
+        #old_net = copy.deepcopy(self.feature_extractor) #copy network before training
+        old_net = copy.deepcopy(self)
 
     cudnn.benchmark # Calling this optimizes runtime
     for epoch in range(self.NUM_EPOCHS):
@@ -130,7 +131,7 @@ class LWF(nn.Module):
 
             # Classification loss for new classes            
             if self.n_known == 0:
-                loss = criterion(g, labels_one_hot)
+                loss = criterion(outputs, labels_one_hot)
             elif self.n_known > 0:
             
                 labels_one_hot = labels_one_hot.type_as(outputs)[:,self.n_known:]
