@@ -34,7 +34,9 @@ class ReverseIndex():
 
     def getNodes(self, labels):
         labels = labels.cpu().numpy()
+       
         reverse_index = self._changeIndex(self.df, 'labels')
+
         nodes = reverse_index.loc[labels, 'nodes']
 
         nodes = torch.tensor(list(nodes))
