@@ -5,6 +5,9 @@ import torch.nn as nn
 import torch.optim as optim
 
 import seaborn as sns
+import json
+
+import matplotlib.pyplot as plt
 
 # These are the default iCaRL hyper-parameters
 def getHyperparams():
@@ -74,12 +77,34 @@ def plotAccuracyTrend(data_plot_line):
 	plt.show()
 
 def plotConfusionMatrix(confusionMatrixData):
+	confusionMatrixData = confusion_matrix(all_labels_cm, all_preds_cm)
 	fig,ax=plt.subplots(figsize=(7,5))
 	sns.heatmap(confusionMatrixData,cmap='terrain',ax=ax)
 	plt.ylabel('True label')
 	plt.xlabel('Predicted label')
 	plt.show()
 
+# write accuracies and confusion matrix utils data 
+# into a json file
+def writeMetrics(method, seed, accuracies, cm_preds, cm_groundtruth):
+	classes = range(10, 100, 10)
+	data = {}
+	data['accuracies'] = []
+	data['confusion_matrix_preds'] = [] 
+	data['confusion_matrix_groundtruth'] = [] 
+	index = 0
+	for classes_seen in classes:
+		data['accuracies'].append({classes_seen : accuracies[i]})
+		#data['confusion_matrix_groundtruth'].append({classes_seen : cm_groundtruth[i]})
+		#data['confusion_matrix_preds'].append({classes_seen : cm_preds[i]})
+		index += 1
 
+	# ex. filename = data_finetuning_30, where 30 is the random seed
+	aus = method + "_" + str(seed)
+	string filename = 'data_{}.txt'.format(aus)
+
+	# write file
+	with open(filename, 'w') as outfile:
+    	json.dump(data, outfile)
 
 
