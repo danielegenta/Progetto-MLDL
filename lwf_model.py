@@ -160,7 +160,7 @@ class LWF(nn.Module):
     # Save the trained network and update features extractor
     self.feature_extractor = copy.deepcopy(net)
     self.fc = copy.deepcopy(net)
-    self.fc.linear = nn.Sequential()
+   # self.fc.linear = nn.Sequential()
     del net
     torch.no_grad()
     torch.cuda.empty_cache()
