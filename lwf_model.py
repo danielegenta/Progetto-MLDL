@@ -43,6 +43,8 @@ class LWF(nn.Module):
     
     self.reverse_index=reverse_index
 
+    optimizer, scheduler = utils.getOptimizerScheduler(self.LR, self.MOMENTUM, self.WEIGHT_DECAY, self.MILESTONES, self.GAMMA, self.parameters())
+
     
   def forward(self, x):
     x = self.feature_extractor(x)
@@ -96,7 +98,7 @@ class LWF(nn.Module):
         g = torch.sigmoid(self.forward(images))
         q[indices] = g.data
 
-    optimizer, scheduler = utils.getOptimizerScheduler(self.LR, self.MOMENTUM, self.WEIGHT_DECAY, self.MILESTONES, self.GAMMA, self.parameters)
+    optimizer = self.optimizer
 
     cudnn.benchmark # Calling this optimizes runtime
     for epoch in range(NUM_EPOCHS):
