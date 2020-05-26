@@ -92,14 +92,16 @@ class LWF(nn.Module):
     self.cuda()
 
     # 5 - store network outputs with pre-update parameters => q
+    """
     q = torch.zeros(len(dataset), self.n_classes).to(self.DEVICE)
-    for indices, images, labels in loader:
-        images = images.to(self.DEVICE)
-        indices = indices.to(self.DEVICE)
-        g = torch.sigmoid(self.forward(images))
-        q[indices] = g.data
+                for indices, images, labels in loader:
+                    images = images.to(self.DEVICE)
+                    indices = indices.to(self.DEVICE)
+                    g = torch.sigmoid(self.forward(images))
+                    q[indices] = g.data
+    """
 
-    net = self.net
+    net = self.feature_extractor
     net = net.to(DEVICE)
 
     optimizer = self.optimizer
@@ -140,7 +142,7 @@ class LWF(nn.Module):
                 loss = criterion(g, labels_one_hot)
             elif self.n_known > 0:
                 #g = F.sigmoid(g)
-                q_i = q[indices]
+                #q_i = q[indices]
                 # to check!
                 #dist_loss = sum(self.dist_loss(g[:,y],q_i[:,y]) for y in range(0, self.n_known))
                 labels_one_hot = labels_one_hot.type_as(g)[:,self.n_known:]
