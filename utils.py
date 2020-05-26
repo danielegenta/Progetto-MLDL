@@ -107,7 +107,7 @@ def writeMetrics(method, seed, accuracies, confusionMatrixData):
     i += 1
 
   i = 0
-  for class_num in range(0, 100, 1): #rows of the cm
+  for class_num in rannge(0,len(confusionMatrixData)): #rows of the cm
     data['cm'].append({class_num : confusionMatrixData[i].tolist()}) 
     i += 1
   
