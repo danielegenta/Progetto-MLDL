@@ -99,6 +99,7 @@ class LWF(nn.Module):
         q[indices] = g.data
 
     optimizer = self.optimizer
+    scheduler = self.scheduler
 
     cudnn.benchmark # Calling this optimizes runtime
     for epoch in range(NUM_EPOCHS):
@@ -133,5 +134,7 @@ class LWF(nn.Module):
 
             loss.backward()
             optimizer.step()
+
+        scheduler.step()
         print("LOSS: ",loss)
 
