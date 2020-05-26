@@ -29,9 +29,6 @@ class LWF(nn.Module):
 
     self.n_classes = n_classes
     self.n_known = 0
-
-    self.cls_loss = utils.getLossCriterion()
-    self.dist_loss = utils.getLossCriterion()
     
     self.BATCH_SIZE = BATCH_SIZE
     self.WEIGHT_DECAY  = WEIGHT_DECAY
@@ -89,7 +86,7 @@ class LWF(nn.Module):
     #          (add output nodes)
     #          (update n_classes)
     gc.collect()
-    
+
     self.increment_classes(len(new_classes))
 
     # define the loader for the augmented_dataset
@@ -97,23 +94,12 @@ class LWF(nn.Module):
     
     self.cuda()
 
-    # 5 - store network outputs with pre-update parameters => q
-    """
-    q = torch.zeros(len(dataset), self.n_classes).to(self.DEVICE)
-                for indices, images, labels in loader:
-                    images = images.to(self.DEVICE)
-                    indices = indices.to(self.DEVICE)
-                    g = torch.sigmoid(self.forward(images))
-                    q[indices] = g.data
-    """
-
     net = self.feature_extractor
     net = net.to(self.DEVICE)
 
     optimizer = self.optimizer
     scheduler = self.scheduler
 
-    # test
     criterion = utils.getLossCriterion()
 
     if self.n_known > 0:
@@ -140,23 +126,17 @@ class LWF(nn.Module):
 
             labels_one_hot.type_as(g)
 
-            # Classification loss for new classes
-            #loss = sum(self.cls_loss(g[:,y], labels_one_hot[:,y]) for y in range(self.n_known, self.n_classes))
-            
-            # test
+            # Classification loss for new classes            
             if self.n_known == 0:
                 loss = criterion(g, labels_one_hot)
             elif self.n_known > 0:
-                #g = F.sigmoid(g)
-                #q_i = q[indices]
-                # to check!
-                #dist_loss = sum(self.dist_loss(g[:,y],q_i[:,y]) for y in range(0, self.n_known))
+            
                 labels_one_hot = labels_one_hot.type_as(g)[:,self.n_known:]
-                #out_old = Variable(torch.sigmoid(old_net(images))[:,:self.n_known],requires_grad = False)
                 out_old = Variable(torch.sigmoid(old_net(images))[:,:self.n_known],requires_grad = False)
+                
+                #[outputold, onehot_new]
                 target = torch.cat((out_old, labels_one_hot),dim=1)
                 loss = criterion(g,target)
-                #loss += dist_loss
 
             loss.backward()
             optimizer.step()
@@ -164,10 +144,7 @@ class LWF(nn.Module):
         scheduler.step()
         print("LOSS: ",loss)
 
-    # Save the trained network and update features extractor
-    #self.feature_extractor = copy.deepcopy(net)
-    #self.fc = copy.deepcopy(net)
-    # self.fc.linear = nn.Sequential()
+    gc.collect()
     del net
     torch.no_grad()
     torch.cuda.empty_cache()
