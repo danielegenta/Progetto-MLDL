@@ -88,13 +88,13 @@ def writeMetrics(method, seed, accuracies,confusionMatrixData):
   data['accuracies'] = []
   data['cm'] = [] #cm line
   i = 0
-  for classes_seen in range(10, 110, 10):
+  for classes_seen in range(10, 110, 10): #x axis on the plot
     data['accuracies'].append({classes_seen : accuracies[i]}) 
     i += 1
 
   i = 0
-  for classes_seen in range(0, 100, 1):
-    data['cm'].append({classes_seen : confusionMatrixData[i].tolist()}) 
+  for class_num in range(0, 100, 1): #rows of the cm
+    data['cm'].append({class_num : confusionMatrixData[i].tolist()}) 
     i += 1
   
   # dump to file
