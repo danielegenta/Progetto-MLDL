@@ -104,7 +104,7 @@ class LWF(nn.Module):
 
     if self.n_known > 0:
         #old_net = copy.deepcopy(self.feature_extractor) #copy network before training
-        old_net = copy.deepcopy(self)
+        old_net = copy.deepcopy(self) #test
 
     cudnn.benchmark # Calling this optimizes runtime
     for epoch in range(self.NUM_EPOCHS):
@@ -139,7 +139,7 @@ class LWF(nn.Module):
                 
                 #[outputold, onehot_new]
                 target = torch.cat((out_old, labels_one_hot),dim=1)
-                loss = criterion(g,target)
+                loss = criterion(outputs,target)
 
             loss.backward()
             optimizer.step()
