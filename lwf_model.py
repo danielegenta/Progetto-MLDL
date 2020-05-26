@@ -43,7 +43,7 @@ class LWF(nn.Module):
     
     self.reverse_index=reverse_index
 
-    optimizer, scheduler = utils.getOptimizerScheduler(self.LR, self.MOMENTUM, self.WEIGHT_DECAY, self.MILESTONES, self.GAMMA, self.parameters())
+    self.optimizer, self.scheduler = utils.getOptimizerScheduler(self.LR, self.MOMENTUM, self.WEIGHT_DECAY, self.MILESTONES, self.GAMMA, self.parameters())
 
     
   def forward(self, x):
