@@ -228,7 +228,7 @@ class ICaRL(nn.Module):
         
         #label
         #label_k = tensors[i.item()][2].unsqueeze(dim = 0) 
-        exemplar_set.append((exemplar_k, label))
+        exemplar_set.append(exemplar_k)
 
         # test features of the exemplar
         phi = feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
