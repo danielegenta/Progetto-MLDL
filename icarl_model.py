@@ -19,10 +19,13 @@ import numpy as np
 from PIL import Image
 from torch.utils.data import DataLoader
 from torch.backends import cudnn
-
-
-from Cifar100.resnet import resnet34
+from torch.autograd import Variable
+from Cifar100.resnet import resnet32
 from Cifar100.Dataset.cifar100 import CIFAR100
+import copy
+import gc
+
+from Cifar100 import utils
 
 
 # Hyper Parameters
@@ -31,22 +34,34 @@ from Cifar100.Dataset.cifar100 import CIFAR100
 # feature size: 2048
 # n_classes: 10 => 100
 class ICaRL(nn.Module):
-  def __init__(self, feature_size, n_classes):
-    # Network architecture
+def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM, K, reverse_index = None):    # Network architecture
     super(ICaRL, self).__init__()
-    self.feature_extractor = resnet34()
-
-    # this should maybe be changed
-    self.feature_extractor.fc =\
-        nn.Linear(self.feature_extractor.fc.in_features, feature_size)
-    self.bn = nn.BatchNorm1d(feature_size, momentum=0.01)
+    self.feature_extractor = resnet32()
+    self.feature_extractor.fc = nn.Linear(self.feature_extractor.fc.in_features,feature_size)
+    self.bn = nn.BatchNorm1d(feature_size, momentum=MOMENTUM)
     self.ReLU = nn.ReLU()
-    self.fc = nn.Linear(feature_size, n_classes)
+
+    self.fc = nn.Linear(feature_size, n_classes, bias = False)
 
     self.n_classes = n_classes
     self.n_known = 0
 
+    # Hyper-parameters from iCaRL
+    self.BATCH_SIZE = BATCH_SIZE
+    self.WEIGHT_DECAY  = WEIGHT_DECAY
+    self.LR = LR
+    self.GAMMA = GAMMA # this allow LR to become 1/5 LR after MILESTONES epochs
+    self.NUM_EPOCHS = NUM_EPOCHS
+    self.DEVICE = DEVICE
+    self.MILESTONES = MILESTONES # when the LR decreases, according to icarl
+    self.MOMENTUM = MOMENTUM
+    self.K = K
+    
+    self.reverse_index=reverse_index
 
+    self.optimizer, self.scheduler = utils.getOptimizerScheduler(self.LR, self.MOMENTUM, self.WEIGHT_DECAY, self.MILESTONES, self.GAMMA, self.parameters())
+
+    gc.collect()
     
 
     # List containing exemplar_sets
@@ -59,21 +74,10 @@ class ICaRL(nn.Module):
     # for the classification loss we have two alternatives
     # 1- BCE loss with Logits (reduction could be mean or sum)
     # 2- BCE loss + sigmoid
-    self.cls_loss = nn.BCEWithLogitsLoss(reduction = 'mean')
-    self.dist_loss = nn.BCEWithLogitsLoss(reduction = 'mean')
+    """self.cls_loss = nn.BCEWithLogitsLoss(reduction = 'mean')
+                self.dist_loss = nn.BCEWithLogitsLoss(reduction = 'mean')"""
     
-    # Hyper-parameters from iCaRL
-    # the following hyper params whould actualy come from the main 
-    self.BATCH_SIZE = 128
-    self.WEIGHT_DECAY  = 1e-5
-    self.LR = 2
-    self.GAMMA = 0.2 # this allow LR to become 1/5 LR after MILESTONES epochs
-    self.NUM_EPOCHS = 70
-    self.DEVICE = "cuda"
-
-    MILESTONES = [49, 63] # when the LR decreases, according to icarl
-    self.optimizer = optim.SGD(self.parameters(), lr=self.LR, weight_decay=self.WEIGHT_DECAY)
-    self.scheduler = optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=MILESTONES, gamma=self.GAMMA)
+    
 
     # Means of exemplars
     self.compute_means = True
@@ -90,12 +94,13 @@ class ICaRL(nn.Module):
   
   # increment the number of classes considered by the net
   def increment_classes(self, n):
+        gc.collect()
         """Add n classes in the final fc layer"""
         in_features = self.fc.in_features
         out_features = self.fc.out_features
         weight = self.fc.weight.data
 
-        self.fc = nn.Linear(in_features, out_features+n, bias=False)
+        self.fc = nn.Linear(in_features, out_features + n, bias = False)
         self.fc.weight.data[:out_features] = weight
         self.n_classes += n
 
