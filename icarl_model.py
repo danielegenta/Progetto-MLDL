@@ -43,7 +43,7 @@ class ICaRL(nn.Module):
     self.bn = nn.BatchNorm1d(feature_size, momentum=MOMENTUM)
     self.ReLU = nn.ReLU()
 
-    self.fc = resnet32()
+    #self.fc = resnet32()
     self.fc = nn.Linear(feature_size, n_classes, bias = False)
 
     self.n_classes = n_classes
@@ -157,7 +157,7 @@ class ICaRL(nn.Module):
 
       means_exemplars = torch.cat(self.exemplar_means, dim=0)
       means_exemplars = torch.stack([means_exemplars] * batch_imgs_size)
-      means_exemplars = means.transpose(1, 2) 
+      means_exemplars = means_exemplars.transpose(1, 2) 
 
       feature = feature_extractor(batch_imgs) 
       aus_normalized_features = []
