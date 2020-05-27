@@ -308,7 +308,7 @@ class ICaRL(nn.Module):
     #current_step = 0
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
-        for images, labels in loader:
+        for _, images, labels in loader:
             # Bring data over the device of choice
             images = images.to(self.DEVICE)
             #labels = self._one_hot_encode(labels, device=self.DEVICE)
@@ -386,7 +386,7 @@ class ConcatDataset(Dataset):
             image = self.transform(image)
             return image,label
         else:
-            image,label = self.dataset1[index]
+            _, image,label = self.dataset1[index]
             return image,label
 
     def __len__(self):
