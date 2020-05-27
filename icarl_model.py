@@ -269,9 +269,8 @@ class ICaRL(nn.Module):
     #          (add output nodes)
     #          (update n_classes)
     if self.n_known > 0:
-    #old_net = copy.deepcopy(self.feature_extractor) #copy network before training
-    old_net = copy.deepcopy(net) 
-        
+      old_net = copy.deepcopy(self.feature_extractor) 
+
     self.increment_classes(len(new_classes))
 
     # 4 - combine current train_subset (dataset) with exemplars
@@ -344,9 +343,6 @@ class ICaRL(nn.Module):
 
                #[outputold, onehot_new]
                target = torch.cat((out_old, labels_one_hot),dim=1)
-               print(outputs)
-               print(target)
-               print(len(self.exemplar_sets))
                loss = criterion(outputs,target)
 
             loss.backward()
