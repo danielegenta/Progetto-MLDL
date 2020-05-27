@@ -300,6 +300,7 @@ class ICaRL(nn.Module):
 
     if self.n_known > 0:
       old_net = copy.deepcopy(net) 
+      print(augmented_dataset)
     #current_step = 0
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
@@ -323,7 +324,7 @@ class ICaRL(nn.Module):
             labels_one_hot.type_as(outputs)
 
             print(net.linear.out_features)
-            print(outputs.size)
+            print(outputs.size())
             print(labels)
             print(labels_one_hot.size())
             # test
