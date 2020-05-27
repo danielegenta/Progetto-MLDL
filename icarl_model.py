@@ -159,7 +159,7 @@ class ICaRL(nn.Module):
       means_exemplars = torch.stack([means_exemplars] * batch_imgs_size)
       means_exemplars = means_exemplars.transpose(1, 2) 
 
-      feature = feature_extractor(batch_imgs) 
+      feature = self.feature_extractor(batch_imgs) 
       aus_normalized_features = []
       for el in feature: # Normalize
           el.data = el.data / el.data.norm()
