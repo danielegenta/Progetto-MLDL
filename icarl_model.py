@@ -249,7 +249,7 @@ class ICaRL(nn.Module):
         for exemplar, label in exemplar_set:
             exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
             aus_dataset.append((exemplar, index)) # nb i do not append the label yet a simple index, 0 is just a placeholder
-        index += 1
+            index += 1
 
     return aus_dataset 
 
@@ -276,8 +276,8 @@ class ICaRL(nn.Module):
     # 4 - combine current train_subset (dataset) with exemplars
     #     to form a new augmented train dataset
     exemplars_dataset = self.augment_dataset_with_exemplars(dataset)
-    re_indexed_dataset = self.reindex(dataset)
-    augmented_dataset = ConcatDataset(re_indexed_dataset, exemplars_dataset, self.transform)
+    #re_indexed_dataset = self.reindex(dataset)
+    augmented_dataset = ConcatDataset(dataset, exemplars_dataset, self.transform)
 
     # join the datasets
 
