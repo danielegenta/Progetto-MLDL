@@ -27,7 +27,7 @@ def getHyperparams():
 		"BATCH_SIZE": 128,
 		"DEVICE": 'cuda',
 		"GAMMA": 0.2,
-		"SEED": 30,
+		"SEED": 30, #use 30, 42, 16
 		"LOG_FREQUENCY": 10,
 		"NUM_CLASSES": 100
 	}
@@ -80,18 +80,32 @@ def map_to_outputs(labels, reverse_index):
 	elif type(labels) == torch.Tensor:
 		return reverse_index.getNodes(labels)
 
-def plotAccuracyTrend(data_plot_line):
+
+def plotAccuracyTrend(method, data_plot_line, seed):
 	plt.figure(figsize=(20,7))
 	accuracyDF=pd.DataFrame(data_plot_line, columns = ['Classes','Accuracy'])
-	ax = sns.lineplot(x="Classes", y="Accuracy",data=accuracyDF)
-	plt.title("All Group Sequential Accuracy")
+	ax = sns.lineplot(x="Classes", y="Accuracy",data=accuracyDF, markers = ['o'])
+	ax.minorticks_on()
+	ax.set_xticks(np.arange(10,110,10))
+	ax.set_xlim(xmin=9, xmax=101)
+	ax.set_ylim(ymin=0, ymax=1)
+	plt.legend(['Accuracy {}'.format(method)])
+	ax.grid(axis='y')
+	plt.title("Accuracies against seen classes {} - seed: {}".format(method, seed))
+	
+	filename = "acc_{}_{}.jpg".format(method, seed) # ex. acc_lwf_30
+	plt.savefig(filename, format='png', dpi=300)
 	plt.show()
 
-def plotConfusionMatrix(confusionMatrixData):
-	fig,ax=plt.subplots(figsize=(7,5))
+def plotConfusionMatrix(method, confusionMatrixData, seed):
+	fig,ax=plt.subplots(figsize=(10,10))
 	sns.heatmap(confusionMatrixData,cmap='terrain',ax=ax)
 	plt.ylabel('True label')
 	plt.xlabel('Predicted label')
+	plt.title("Confusion Matrix {} - seed: {}".format(method, seed))
+
+	filename = "cm_{}_{}.jpg".format(method, seed) # ex. cm_lwf_30
+	plt.savefig(filename, format='png', dpi=300)
 	plt.show()
 
 # Write down the metrics (accuracy trand and confusion matrix)
@@ -107,7 +121,7 @@ def writeMetrics(method, seed, accuracies, confusionMatrixData):
     i += 1
 
   i = 0
-  for class_num in range(0, 100, 1): #rows of the cm
+  for class_num in range(0,len(confusionMatrixData)): #rows of the cm
     data['cm'].append({class_num : confusionMatrixData[i].tolist()}) 
     i += 1
   
