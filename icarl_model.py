@@ -108,7 +108,7 @@ class ICaRL(nn.Module):
         self.n_classes += n
 
   # computes the means of each exemplar set
-  def compute_means(self):
+  def computeMeans(self):
     torch.no_grad()  
     torch.cuda.empty_cache()
 
