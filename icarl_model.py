@@ -100,6 +100,7 @@ class ICaRL(nn.Module):
         #weight = self.feature_extractor.linear.weight.data
 
         self.feature_extractor.linear = nn.Linear(in_features, out_features + n, bias = False)
+        print(self.feature_extractor.linear.out_features)
         #self.fc.weight.data[:out_features] = weight
         self.n_classes += n
 
