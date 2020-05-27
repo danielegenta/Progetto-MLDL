@@ -84,13 +84,15 @@ def plotAccuracyTrend(method, data_plot_line, seed):
 	plt.figure(figsize=(20,7))
 	accuracyDF=pd.DataFrame(data_plot_line, columns = ['Classes','Accuracy'])
 	ax = sns.lineplot(x="Classes", y="Accuracy",data=accuracyDF, markers = True)
-	ax.set_yticks(major_ticks)
-	ax.set_yticks(minor_ticks, minor=True)
+	ax.minorticks_on()
 	ax.set_xticks(np.arange(10,110,10))
 	ax.set_xlim(xmin=9,xmax=101)
 	plt.legend(['Accuracy {}'.format(method)])
 	ax.grid(axis='y')
 	plt.title("Accuracies against seen classes {} - seed: {}".format(method, seed))
+	
+	filename = "acc_{}_{}.jpg".format(method, seed) # ex. acc_lwf_30
+	plt.savefig(filename, format='png', dpi=300)
 	plt.show()
 
 def plotConfusionMatrix(method, confusionMatrixData, seed):
@@ -99,6 +101,9 @@ def plotConfusionMatrix(method, confusionMatrixData, seed):
 	plt.ylabel('True label')
 	plt.xlabel('Predicted label')
 	plt.title("Confusion Matrix {} - seed: {}".format(method, seed))
+
+	filename = "cm_{}_{}.jpg".format(method, seed) # ex. cm_lwf_30
+	plt.savefig(filename, format='png', dpi=300)
 	plt.show()
 
 # Write down the metrics (accuracy trand and confusion matrix)
