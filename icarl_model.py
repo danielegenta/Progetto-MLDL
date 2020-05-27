@@ -121,7 +121,7 @@ class ICaRL(nn.Module):
         features=[]
         for exemplar in exemplar_set:
           exemplar = exemplar.to(self.DEVICE)
-          feature = feature_extractor(exemplar)
+          feature = self.feature_extractor(exemplar)
           features.append(feature)
 
           # cleaning 
