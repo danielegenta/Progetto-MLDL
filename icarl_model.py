@@ -276,7 +276,8 @@ class ICaRL(nn.Module):
     # 4 - combine current train_subset (dataset) with exemplars
     #     to form a new augmented train dataset
     exemplars_dataset = self.augment_dataset_with_exemplars(dataset)
-    augmented_dataset = ConcatDataset(dataset, exemplars_dataset, self.transform)
+    re_indexed_dataset = self.reindex(dataset)
+    augmented_dataset = ConcatDataset(re_indexed_dataset, exemplars_dataset, self.transform)
 
     # join the datasets
 
@@ -373,7 +374,13 @@ class ICaRL(nn.Module):
             # the number of images per each exemplar set (class) progressively decreases
             self.exemplar_sets[y] = P_y[:m] 
 
-
+  def reindex(self, dataset):
+    reindexeded_dataset = []
+    index = 0
+    for el in dataset:
+      reindexeded_dataset.append((el, index)) # nb i do not append the label yet a simple index, 0 is just a placeholder
+      index += 1
+    return reindexeded_dataset 
 
 # ----------
 from torch.utils.data import Dataset
