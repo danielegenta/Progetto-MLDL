@@ -239,9 +239,8 @@ class ICaRL(nn.Module):
   def augment_dataset_with_exemplars(self, dataset):
     transformToImg = transforms.ToPILImage()
     index = 0
-    for exemplar_set in enumerate(self.exemplar_sets): #for each class and exemplar set for that class
+    for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
         for exemplar in exemplar_set:
-            print(exemplar)
             exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
             dataset.append(exemplar_images, index) # nb i do not append the label yet a simple index
         index += 1
