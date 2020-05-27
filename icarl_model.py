@@ -382,12 +382,12 @@ class ConcatDataset(Dataset):
         self.transform = transform
 
     def __getitem__(self,index):
-        if index >= self.l1:
-            image, label = self.dataset2[index - self.l1]
-            image = self.transform(image)
+        if index < self.l1:
+            _, image,label = self.dataset1[index]
             return image,label
         else:
-            _, image,label = self.dataset1[index]
+            image, label = self.dataset2[index - self.l1]
+            image = self.transform(image)
             return image,label
 
     def __len__(self):
