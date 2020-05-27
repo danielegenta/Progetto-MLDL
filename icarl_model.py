@@ -115,12 +115,7 @@ class ICaRL(nn.Module):
     with torch.no_grad():
       for exemplar_set in self.exemplar_sets:
         features=[]
-        for exemplar,_ in exemplar_set:
-          print(exemplar)
-          print("-----")
-          print(exemplar[0])
-          print("-----")
-          print(exemplar[1])
+        for exemplar, _ in exemplar_set:
           exemplar = exemplar.to(self.DEVICE)
           feature = feature_extractor(exemplar)
           features.append(feature)
