@@ -300,7 +300,7 @@ class ICaRL(nn.Module):
     net = net.to(self.DEVICE)
 
     if self.n_known > 0:
-      old_net = copy.deepcopy(self.feature_extractor) 
+      old_net = copy.deepcopy(net) 
 
     optimizer = self.optimizer
     scheduler = self.scheduler
