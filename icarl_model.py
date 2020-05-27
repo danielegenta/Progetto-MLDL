@@ -36,7 +36,7 @@ from Cifar100 import utils
 # feature size: 2048
 # n_classes: 10 => 100
 class ICaRL(nn.Module):
-  def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM,K, reverse_index = None):
+  def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM,K, transform, reverse_index = None):
     super(ICaRL, self).__init__()
     self.feature_extractor = resnet32()
     self.feature_extractor.linear = nn.Linear(self.feature_extractor.fc.in_features, n_classes)
@@ -69,6 +69,7 @@ class ICaRL(nn.Module):
 
     gc.collect()
     
+    self.transform = transform
 
     # List containing exemplar_sets
     # Each exemplar_set is a np.array of N images
@@ -239,12 +240,14 @@ class ICaRL(nn.Module):
   def augment_dataset_with_exemplars(self, dataset):
     transformToImg = transforms.ToPILImage()
     index = 0
+    aus_dataset = []
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
         for exemplar in exemplar_set:
             exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
-            dataset.append(exemplar_images, index) # nb i do not append the label yet a simple index
+            aus_dataset.append(exemplar_images, index) # nb i do not append the label yet a simple index
         index += 1
 
+    return aus_dataset 
 
   def _one_hot_encode(self, labels, dtype=None, device=None):
     enconded = torch.zeros(self.n_classes, len(labels), dtype=dtype, device=device)
@@ -257,7 +260,7 @@ class ICaRL(nn.Module):
     # 1 - retrieve the classes from the dataset (which is the current train_subset)
     # 2 - retrieve the new classes
     # 1,2 are done in the main_icarl
-    gc.collect()
+    #gc.collect()
 
     # 3 - increment classes
     #          (add output nodes)
@@ -266,10 +269,13 @@ class ICaRL(nn.Module):
 
     # 4 - combine current train_subset (dataset) with exemplars
     #     to form a new augmented train dataset
-    self.augment_dataset_with_exemplars(dataset)
+    exemplars_dataset = self.augment_dataset_with_exemplars(dataset)
+    augmented_dataset = ConcatDataset(dataset, exemplars_dataset, self.transform)
+
+    # join the datasets
 
     # define the loader for the augmented_dataset
-    loader = DataLoader(dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
+    loader = DataLoader(augmented_dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
 
     self.cuda()
     # 5 - store network outputs with pre-update parameters => q
@@ -357,3 +363,33 @@ class ICaRL(nn.Module):
             # where m is the UPDATED K/number_classes_seen
             # the number of images per each exemplar set (class) progressively decreases
             self.exemplar_sets[y] = P_y[:m] 
+
+
+
+# ----------
+from torch.utils.data import Dataset
+"""
+  Merge two different datasets (train and exemplars in our case)
+"""
+class ConcatDataset(Dataset):
+    
+    def __init__(self, dataset1, dataset2, transform):
+        self.l1 = len(dataset1)
+        self.l2 = len(dataset2)
+        self.dataset1 = dataset1
+        self.dataset2 = dataset2
+        self.transform = transform
+
+    def __getitem__(self,index):
+        if index >= self.l1:
+            image,label = self.d2[index-self.l1]
+            image = self.transform(image)
+            return image,label
+        else:
+            image,label = self.d1[index]
+            return image,label
+
+    def __len__(self):
+        return (self.l1 + self.l2)
+
+#------------
