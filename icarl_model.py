@@ -248,7 +248,7 @@ class ICaRL(nn.Module):
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
         for exemplar, label in exemplar_set:
             exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
-            aus_dataset.append((exemplar, index)) # nb i do not append the label yet a simple index, 0 is just a placeholder
+            aus_dataset.append((exemplar, label)) # nb i do not append the label yet a simple index, 0 is just a placeholder
             index += 1
 
     return aus_dataset 
@@ -387,7 +387,7 @@ class ConcatDataset(Dataset):
 
     def __getitem__(self,index):
         if index >= self.l1:
-            image,label = self.dataset2[index - self.l1]
+            image, label = self.dataset2[index - self.l1]
             image = self.transform(image)
             return image,label
         else:
