@@ -302,9 +302,6 @@ class ICaRL(nn.Module):
     if self.n_known > 0:
       old_net = copy.deepcopy(net) 
 
-      print(old_net.linear.out_features)
-      print(net.linear.out_features)
-
     optimizer = self.optimizer
     scheduler = self.scheduler
 
@@ -330,11 +327,7 @@ class ICaRL(nn.Module):
             outputs = net(images)
 
             #loss = sum(self.cls_loss(g[:,y], labels[:,y]) for y in range(self.n_known, self.n_classes))
-            if self.n_known > 0:
-              classes_with_exemplars = self.n_classes + 10
-            else:
-              classes_with_exemplars = self.n_classes
-            labels_one_hot = utils._one_hot_encode(labels,classes_with_exemplars, self.reverse_index, device=self.DEVICE)
+            labels_one_hot = utils._one_hot_encode(labels,n_classes, self.reverse_index, device=self.DEVICE)
             labels_one_hot.type_as(outputs)
 
             # test
@@ -351,6 +344,7 @@ class ICaRL(nn.Module):
                out_old = Variable(torch.sigmoid(old_net(images))[:,:len(self.exemplar_sets)],requires_grad = False)
 
                #[outputold, onehot_new]
+               print(len(self.exemplar_sets))
                target = torch.cat((out_old, labels_one_hot),dim=1)
                print(outputs.size())
                print(target.size())
