@@ -179,7 +179,7 @@ class ICaRL(nn.Module):
 
   # implementation of alg. 4 of icarl paper
   # iCaRL ConstructExemplarSet
-  def construct_exemplar_set(self, tensors, m, transform):
+  def construct_exemplar_set(self, tensors, m, transform,label):
     torch.no_grad()
     torch.cuda.empty_cache()
     gc.collect()
@@ -224,6 +224,9 @@ class ICaRL(nn.Module):
         S = torch.cat([summon]*features_s.size()[0]) # second addend, features in the exemplar set
         i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
         exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)
+        
+        #label
+        #label_k = tensors[i.item()][2].unsqueeze(dim = 0) 
         exemplar_set.append(exemplar_k)
 
         # test features of the exemplar
@@ -234,7 +237,7 @@ class ICaRL(nn.Module):
 
     # cleaning
     torch.cuda.empty_cache()
-    self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
+    self.exemplar_sets.append((exemplar_set, label)) #update exemplar sets with the updated exemplars images
 
 
   def augment_dataset_with_exemplars(self, dataset):
@@ -242,9 +245,9 @@ class ICaRL(nn.Module):
     index = 0
     aus_dataset = []
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
-        for exemplar in exemplar_set:
+        for exemplar, label in exemplar_set:
             exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
-            aus_dataset.append((exemplar, index)) # nb i do not append the label yet a simple index, 0 is just a placeholder
+            aus_dataset.append((exemplar, label)) # nb i do not append the label yet a simple index, 0 is just a placeholder
         index += 1
 
     return aus_dataset 
