@@ -217,14 +217,14 @@ class ICaRL(nn.Module):
 
     features_s = torch.cat(features)
     class_mean = features_s.mean(0)
-    class_mean = torch.stack([mean]*features_s.size()[0])
+    class_mean = torch.stack([class_mean]*features_s.size()[0])
     torch.cuda.empty_cache()
 
     exemplar_set = []
     exemplar_features = [] # list of Variables of shape (feature_size,)
     for k in range(1, (m + 1)):
         S = torch.cat([summa]*features_s.size()[0]) # second addend, features in the exemplar set
-        i = torch.argmin((mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
+        i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
         exemplar_k = tensors[i.item()][0].unsqueeze(dim=0) # take the image
         exemplar_set.append(exemplar_k)
         phi =  feature_extractor(exemplar_k.to(self.DEVICE))
