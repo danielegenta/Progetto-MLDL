@@ -238,6 +238,8 @@ class ICaRL(nn.Module):
 
   def augment_dataset_with_exemplars(self, dataset):
     transformToImg = transforms.ToPILImage()
+    print(self.exemplar_sets)
+    print(dataset)
     for y, P_y in enumerate(self.exemplar_sets): #for each class and exemplar set for that class
         exemplar_images = P_y
         exemplar_labels = [y] * len(P_y) #i create a vector of labels [class class class ...] for each class in the exemplar set
@@ -266,7 +268,6 @@ class ICaRL(nn.Module):
 
     # 4 - combine current train_subset (dataset) with exemplars
     #     to form a new augmented train dataset
-    print(dataset)
     self.augment_dataset_with_exemplars(dataset)
 
     # define the loader for the augmented_dataset
