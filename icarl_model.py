@@ -375,11 +375,11 @@ from torch.utils.data import Dataset
 class ConcatDataset(Dataset):
     
     def __init__(self, dataset1, dataset2, transform):
-        self.l1 = len(dataset1)
-        self.l2 = len(dataset2)
         self.dataset1 = dataset1
         self.dataset2 = dataset2
         self.transform = transform
+        self.l1 = len(dataset1)
+        self.l2 = len(dataset2)
 
     def __getitem__(self,index):
         if index < self.l1:
