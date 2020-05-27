@@ -329,11 +329,9 @@ class ICaRL(nn.Module):
             # Forward pass to the network
             outputs = net(images)
 
-            print(images.size())
-
             #loss = sum(self.cls_loss(g[:,y], labels[:,y]) for y in range(self.n_known, self.n_classes))
             if self.n_known > 0:
-              classes_with_exemplars = self.n_classes + len(exemplar_sets)
+              classes_with_exemplars = self.n_classes + 10
             else:
               classes_with_exemplars = self.n_classes
             labels_one_hot = utils._one_hot_encode(labels,classes_with_exemplars, self.reverse_index, device=self.DEVICE)
