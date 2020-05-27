@@ -312,6 +312,7 @@ class ICaRL(nn.Module):
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
         for images, labels in loader:
+            print(set(labels))
             # Bring data over the device of choice
             images = images.to(self.DEVICE)
             #labels = self._one_hot_encode(labels, device=self.DEVICE)
