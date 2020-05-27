@@ -269,8 +269,6 @@ class ICaRL(nn.Module):
     # 3 - increment classes
     #          (add output nodes)
     #          (update n_classes)
-    if self.n_known > 0:
-      old_net = copy.deepcopy(self.feature_extractor) 
 
     self.increment_classes(len(new_classes))
 
@@ -284,7 +282,7 @@ class ICaRL(nn.Module):
     # define the loader for the augmented_dataset
     loader = DataLoader(augmented_dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
 
-    self.cuda()
+    #self.cuda()
     # 5 - store network outputs with pre-update parameters => q
     """    
     q = torch.zeros(len(dataset), self.n_classes)
@@ -300,6 +298,9 @@ class ICaRL(nn.Module):
 
     net = self.feature_extractor
     net = net.to(self.DEVICE)
+
+    if self.n_known > 0:
+      old_net = copy.deepcopy(self.feature_extractor) 
 
     optimizer = self.optimizer
     scheduler = self.scheduler
