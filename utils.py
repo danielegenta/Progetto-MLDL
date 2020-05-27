@@ -98,7 +98,7 @@ def plotConfusionMatrix(method, confusionMatrixData, seed):
 	sns.heatmap(confusionMatrixData,cmap='terrain',ax=ax)
 	plt.ylabel('True label')
 	plt.xlabel('Predicted label')
-	plt.title("Confusion Matrix {}".format(method, seed))
+	plt.title("Confusion Matrix {} - seed: {}".format(method, seed))
 	plt.show()
 
 # Write down the metrics (accuracy trand and confusion matrix)
