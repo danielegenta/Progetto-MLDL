@@ -300,7 +300,8 @@ class ICaRL(nn.Module):
 
     if len(self.exemplar_sets) > 0:
       old_net = copy.deepcopy(net) 
-      print(augmented_dataset)
+      print(augmented_dataset.__getitem__(0))
+      print(augmented_dataset.__getitem__(11))
     #current_step = 0
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
