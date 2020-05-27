@@ -298,7 +298,7 @@ class ICaRL(nn.Module):
     cudnn.benchmark # Calling this optimizes runtime
     net = net.to(self.DEVICE)
 
-    if self.n_known > 0:
+    if len(self.exemplar_sets) > 0:
       old_net = copy.deepcopy(net) 
       print(augmented_dataset)
     #current_step = 0
@@ -332,10 +332,10 @@ class ICaRL(nn.Module):
             # Classification loss for new classes
 
             # Loss = only classification on new classes
-            if self.n_known == 0:
+            if len(self.exemplar_sets) == 0:
                 loss = criterion(outputs, labels_one_hot)
             # Distilation loss for old classes, class loss on new classes
-            if self.n_known > 0:
+            if len(self.exemplar_sets) > 0:
 
                labels_one_hot = labels_one_hot.type_as(outputs)[:,len(self.exemplar_sets):]
                out_old = Variable(torch.sigmoid(old_net(images))[:,:len(self.exemplar_sets)],requires_grad = False)
