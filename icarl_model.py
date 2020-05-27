@@ -300,7 +300,7 @@ class ICaRL(nn.Module):
 
     cudnn.benchmark # Calling this optimizes runtime
     #current_step = 0
-    for epoch in range(NUM_EPOCHS):
+    for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
         for indices, images, labels in loader:
             # Bring data over the device of choice
