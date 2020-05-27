@@ -276,7 +276,6 @@ class ICaRL(nn.Module):
     # 4 - combine current train_subset (dataset) with exemplars
     #     to form a new augmented train dataset
     exemplars_dataset = self.augment_dataset_with_exemplars(dataset)
-    #re_indexed_dataset = self.reindex(dataset)
     augmented_dataset = ConcatDataset(dataset, exemplars_dataset, self.transform)
 
     # join the datasets
@@ -313,7 +312,7 @@ class ICaRL(nn.Module):
     #current_step = 0
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
-        for _, images, labels in loader:
+        for images, labels in loader:
             # Bring data over the device of choice
             images = images.to(self.DEVICE)
             #labels = self._one_hot_encode(labels, device=self.DEVICE)
@@ -346,11 +345,7 @@ class ICaRL(nn.Module):
                out_old = Variable(torch.sigmoid(old_net(images))[:,:len(self.exemplar_sets)],requires_grad = False)
 
                #[outputold, onehot_new]
-               print(self.n_classes)
-               print(len(self.exemplar_sets))
                target = torch.cat((out_old, labels_one_hot),dim=1)
-               print(outputs.size())
-               print(target.size())
                loss = criterion(outputs,target)
 
             loss.backward()
@@ -374,13 +369,6 @@ class ICaRL(nn.Module):
             # the number of images per each exemplar set (class) progressively decreases
             self.exemplar_sets[y] = P_y[:m] 
 
-  def reindex(self, dataset):
-    reindexeded_dataset = []
-    index = 0
-    for el in dataset:
-      reindexeded_dataset.append((el, index)) # nb i do not append the label yet a simple index, 0 is just a placeholder
-      index += 1
-    return reindexeded_dataset 
 
 # ----------
 from torch.utils.data import Dataset
