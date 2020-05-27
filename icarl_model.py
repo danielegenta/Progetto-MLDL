@@ -300,8 +300,8 @@ class ICaRL(nn.Module):
 
     if len(self.exemplar_sets) > 0:
       old_net = copy.deepcopy(net) 
-      print(augmented_dataset.__getitem__(3))
-      print(augmented_dataset.__getitem__(15))
+      for i in range(0, len(augmented_dataset))
+        print(augmented_dataset.__getitem__(i))
     #current_step = 0
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
@@ -324,10 +324,6 @@ class ICaRL(nn.Module):
             labels_one_hot = utils._one_hot_encode(labels,self.n_classes, self.reverse_index, device=self.DEVICE)
             labels_one_hot.type_as(outputs)
 
-            print(net.linear.out_features)
-            print(outputs.size())
-            print(labels)
-            print(labels_one_hot.size())
             # test
             #labels_one_hot = nn.functional.one_hot(labels, self.n_classes)
             # Classification loss for new classes
