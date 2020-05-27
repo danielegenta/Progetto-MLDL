@@ -245,7 +245,7 @@ class ICaRL(nn.Module):
     transformToImg = transforms.ToPILImage()
     index = 0
     aus_dataset = []
-    print(len(exemplar_sets))
+    print(len(self.exemplar_sets))
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
         for exemplar, label in exemplar_set:
             exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
