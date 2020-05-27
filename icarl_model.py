@@ -229,8 +229,11 @@ class ICaRL(nn.Module):
         i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
         exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)
         exemplar_set.append(exemplar_k)
-        phi =  feature_extractor(exemplar_k.to(self.DEVICE))
-        summon = summon + phi # update sum of features
+
+        # test features of the exemplar
+        phi = self.feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
+        
+        summon += phi # update sum of features
         del exemplar_k 
 
     # cleaning
