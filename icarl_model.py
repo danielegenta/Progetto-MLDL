@@ -203,7 +203,7 @@ class ICaRL(nn.Module):
                     feature = feature / np.linalg.norm(feature) # Normalize
                     features.append(feature[0])
     """
-    loader = DataLoader(tensors,batch_size=BATCH_SIZE,shuffle=True,drop_last=False,num_workers = 4)
+    loader = DataLoader(tensors,batch_size=self.BATCH_SIZE,shuffle=True,drop_last=False,num_workers = 4)
 
     for _, images, labels in loader:
       images = images.to(self.DEVICE)
@@ -227,7 +227,7 @@ class ICaRL(nn.Module):
         i = torch.argmin((mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
         exemplar_k = tensors[i.item()][0].unsqueeze(dim=0) # take the image
         exemplar_set.append(exemplar_k)
-        phi =  feature_extractor(exemplar_k.to(DEVICE))
+        phi =  feature_extractor(exemplar_k.to(self.DEVICE))
         summa = summa + phi # update sum of features
         del exemplar_k 
 
@@ -341,6 +341,7 @@ class ICaRL(nn.Module):
             optimizer.step()
 
         scheduler.step()
+        print("LOSS: ",loss)
 
     gc.collect()
     del net
