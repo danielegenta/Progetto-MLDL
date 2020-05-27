@@ -344,6 +344,7 @@ class ICaRL(nn.Module):
                out_old = Variable(torch.sigmoid(old_net(images))[:,:len(self.exemplar_sets)],requires_grad = False)
 
                #[outputold, onehot_new]
+               print(self.n_classes)
                print(len(self.exemplar_sets))
                target = torch.cat((out_old, labels_one_hot),dim=1)
                print(outputs.size())
