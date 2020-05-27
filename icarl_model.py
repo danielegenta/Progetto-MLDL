@@ -34,7 +34,7 @@ from Cifar100 import utils
 # feature size: 2048
 # n_classes: 10 => 100
 class ICaRL(nn.Module):
-def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM, K, reverse_index = None):    # Network architecture
+  def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM,K, reverse_index = None):
     super(ICaRL, self).__init__()
     self.feature_extractor = resnet32()
     self.feature_extractor.fc = nn.Linear(self.feature_extractor.fc.in_features,feature_size)
