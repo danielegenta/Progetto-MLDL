@@ -194,13 +194,7 @@ class ICaRL(nn.Module):
     """
     # Compute and cache features for each example
     features = []
-    """
-    for img in images:
-                    x = Variable(transform(Image.fromarray(img)), volatile=True).cuda()
-                    feature = self.feature_extractor(x.unsqueeze(0)).data.cpu().numpy()
-                    feature = feature / np.linalg.norm(feature) # Normalize
-                    features.append(feature[0])
-    """
+
     loader = DataLoader(tensors,batch_size=self.BATCH_SIZE,shuffle=True,drop_last=False,num_workers = 4)
 
     for _, images, labels in loader:
@@ -262,6 +256,7 @@ class ICaRL(nn.Module):
 
   # just a start to make the test work
   def update_representation(self, dataset, new_classes):
+    print(new_classes)
     # 1 - retrieve the classes from the dataset (which is the current train_subset)
     # 2 - retrieve the new classes
     # 1,2 are done in the main_icarl
@@ -319,7 +314,9 @@ class ICaRL(nn.Module):
             # Forward pass to the network
             outputs = net(images)
 
-            labels_one_hot = utils._one_hot_encode(labels,self.n_classes, self.reverse_index, device=self.DEVICE)
+            print(labels)
+
+            labels_one_hot = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
             labels_one_hot.type_as(outputs)
 
             # test
@@ -374,9 +371,6 @@ class ConcatDataset(Dataset):
         self.transform = transform
         self.l1 = len(dataset1)
         self.l2 = len(dataset2)
-
-        print(self.l1)
-        print(self.l2)
 
     def __getitem__(self,index):
         if index < self.l1:
