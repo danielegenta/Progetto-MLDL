@@ -304,7 +304,7 @@ class ICaRL(nn.Module):
 
     if self.n_known > 0:
         #old_net = copy.deepcopy(self.feature_extractor) #copy network before training
-        old_net = copy.deepcopy(self) #test
+        old_net = copy.deepcopy(net) 
 
 
     cudnn.benchmark # Calling this optimizes runtime
