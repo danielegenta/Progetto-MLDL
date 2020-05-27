@@ -226,7 +226,8 @@ class ICaRL(nn.Module):
     for k in range(1, (m + 1)):
         S = torch.cat([summon]*features_s.size()[0]) # second addend, features in the exemplar set
         i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
-        exemplar_k = tensors[i.item()][0].unsqueeze(dim=0) # take the image
+        print(type(tensors))
+        exemplar_k = tensors[i.item()].unsqueeze(dim=0) # take the image
         exemplar_set.append(exemplar_k)
         phi =  feature_extractor(exemplar_k.to(self.DEVICE))
         summon = summon + phi # update sum of features
@@ -244,7 +245,7 @@ class ICaRL(nn.Module):
         exemplar_labels = [y] * len(P_y) #i create a vector of labels [class class class ...] for each class in the exemplar set
         for exemplar in exemplar_images:
             exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
-            dataset.append(exemplar_images, y)
+            dataset.append(exemplar_images, y) # y = label of the class
 
 
   def _one_hot_encode(self, labels, dtype=None, device=None):
