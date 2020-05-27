@@ -302,7 +302,8 @@ class ICaRL(nn.Module):
     if self.n_known > 0:
       old_net = copy.deepcopy(net) 
 
-    print(old_net.linear.out_features)
+      print(old_net.linear.out_features)
+      print(net.linear.out_features)
 
     optimizer = self.optimizer
     scheduler = self.scheduler
