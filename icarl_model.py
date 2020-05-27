@@ -327,16 +327,15 @@ class ICaRL(nn.Module):
 
             # Loss = only classification on new classes
             if self.n_known == 0:
-                loss = criterion(outputs, labels_onehot)
+                loss = criterion(outputs, labels_one_hot)
             # Distilation loss for old classes, class loss on new classes
             if self.n_known > 0:
-                # g = F.sigmoid(g)
-                q_i = q[indices]
-                # to check!
-                for y in range(0,len(self.exemplar_sets)):
-                    dist_loss += self.dist_loss(g[:,y],q_i[:,y])
-                #dist_loss = dist_loss / self.n_known
-                loss += dist_loss
+               labels_one_hot = labels_one_hot.type_as(outputs)[:,self.n_known:]
+               out_old = Variable(torch.sigmoid(old_net(images))[:,:self.n_known],requires_grad = False)
+                
+                #[outputold, onehot_new]
+                target = torch.cat((out_old, labels_one_hot),dim=1)
+                loss = criterion(outputs,target)
 
             loss.backward()
             optimizer.step()
