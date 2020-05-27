@@ -248,7 +248,7 @@ class ICaRL(nn.Module):
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
         for exemplar, label in exemplar_set:
             exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
-            aus_dataset.append((exemplar, label)) # nb i do not append the label yet a simple index, 0 is just a placeholder
+            aus_dataset.append((exemplar, index)) # nb i do not append the label yet a simple index, 0 is just a placeholder
         index += 1
 
     return aus_dataset 
@@ -269,6 +269,7 @@ class ICaRL(nn.Module):
     # 3 - increment classes
     #          (add output nodes)
     #          (update n_classes)
+    print(new_classes)
 
     self.increment_classes(len(new_classes))
 
@@ -312,7 +313,6 @@ class ICaRL(nn.Module):
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
         for images, labels in loader:
-            print(set(labels))
             # Bring data over the device of choice
             images = images.to(self.DEVICE)
             #labels = self._one_hot_encode(labels, device=self.DEVICE)
