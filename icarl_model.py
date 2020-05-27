@@ -287,10 +287,6 @@ class ICaRL(nn.Module):
     # 6 - run network training, with loss function
 
     net = self.feature_extractor
-    
-
-    if self.n_known > 0:
-      old_net = copy.deepcopy(net) 
 
     optimizer = optim.SGD(net.parameters(), lr=self.LR, weight_decay=self.WEIGHT_DECAY, momentum=self.MOMENTUM)
 
@@ -301,6 +297,9 @@ class ICaRL(nn.Module):
 
     cudnn.benchmark # Calling this optimizes runtime
     net = net.to(self.DEVICE)
+
+    if self.n_known > 0:
+      old_net = copy.deepcopy(net) 
     #current_step = 0
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
@@ -323,6 +322,10 @@ class ICaRL(nn.Module):
             labels_one_hot = utils._one_hot_encode(labels,self.n_classes, self.reverse_index, device=self.DEVICE)
             labels_one_hot.type_as(outputs)
 
+            print(net.linear.out_features)
+            print(outputs.size)
+            print(labels)
+            print(labels_one_hot.size())
             # test
             #labels_one_hot = nn.functional.one_hot(labels, self.n_classes)
             # Classification loss for new classes
