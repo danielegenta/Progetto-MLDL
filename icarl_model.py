@@ -308,12 +308,12 @@ class ICaRL(nn.Module):
     #current_step = 0
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
-        for indices, images, labels in loader:
+        for images, labels in loader:
             # Bring data over the device of choice
             images = images.to(self.DEVICE)
             #labels = self._one_hot_encode(labels, device=self.DEVICE)
             labels = labels.to(self.DEVICE)
-            indices = indices.to(self.DEVICE)
+            #indices = indices.to(self.DEVICE)
             net.train()
 
             # PyTorch, by default, accumulates gradients after each backward pass
@@ -382,7 +382,7 @@ class ConcatDataset(Dataset):
 
     def __getitem__(self,index):
         if index >= self.l1:
-            image,label = self.dataset2[index-self.l1]
+            image,label = self.dataset2[index - self.l1]
             image = self.transform(image)
             return image,label
         else:
