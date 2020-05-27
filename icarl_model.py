@@ -39,12 +39,15 @@ class ICaRL(nn.Module):
   def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM,K, reverse_index = None):
     super(ICaRL, self).__init__()
     self.feature_extractor = resnet32()
-    self.feature_extractor.fc = nn.Linear(self.feature_extractor.fc.in_features,feature_size)
-    self.bn = nn.BatchNorm1d(feature_size, momentum=MOMENTUM)
-    self.ReLU = nn.ReLU()
-
+    self.feature_extractor.linear = nn.Linear(self.feature_extractor.fc.in_features, n_classes)
+    
+    #self.bn = nn.BatchNorm1d(feature_size, momentum=MOMENTUM)
+    #self.ReLU = nn.ReLU()
     #self.fc = resnet32()
-    self.fc = nn.Linear(feature_size, n_classes, bias = False)
+    #self.fc = nn.Linear(feature_size, n_classes, bias = False)
+
+    self.fc = ResNet18()
+    self.fc.linear = nn.Sequential()
 
     self.n_classes = n_classes
     self.n_known = 0
@@ -85,25 +88,17 @@ class ICaRL(nn.Module):
     # Means of exemplars
     self.compute_means = True
     self.exemplar_means = []
-
-    
-  def forward(self, x):
-    x = self.feature_extractor(x)
-    x = self.bn(x)
-    x = self.ReLU(x)
-    x = self.fc(x)
-
-    return x
   
   # increment the number of classes considered by the net
   def increment_classes(self, n):
         gc.collect()
-        """Add n classes in the final fc layer"""
-        in_features = self.fc.in_features
-        out_features = self.fc.out_features
-        weight = self.fc.weight.data
 
-        self.fc = nn.Linear(in_features, out_features + n, bias = False)
+        """Add n classes in the final fc layer"""
+        in_features = self.feature_extractor.linear.in_features
+        out_features = self.feature_extractor.linear.out_features
+        weight = self.feature_extractor.linear.weight.data
+
+        self.feature_extractor.linear = nn.Linear(in_features, out_features + n, bias = False)
         self.fc.weight.data[:out_features] = weight
         self.n_classes += n
 
@@ -121,7 +116,7 @@ class ICaRL(nn.Module):
         features=[]
         for exemplar in exemplar_set:
           exemplar = exemplar.to(self.DEVICE)
-          feature = self.feature_extractor(exemplar)
+          feature = feature_extractor(exemplar)
           features.append(feature)
 
           # cleaning 
@@ -159,7 +154,7 @@ class ICaRL(nn.Module):
       means_exemplars = torch.stack([means_exemplars] * batch_imgs_size)
       means_exemplars = means_exemplars.transpose(1, 2) 
 
-      feature = self.feature_extractor(batch_imgs) 
+      feature = feature_extractor(batch_imgs) 
       aus_normalized_features = []
       for el in feature: # Normalize
           el.data = el.data / el.data.norm()
@@ -209,7 +204,7 @@ class ICaRL(nn.Module):
     for _, images, labels in loader:
       images = images.to(self.DEVICE)
       labels = labels.to(self.DEVICE)
-      feature = self.feature_extractor(images) 
+      feature = feature_extractor(images) 
 
       # is this line important? it yields an error
       #feature = feature / np.linalg.norm(feature) # Normalize
@@ -231,7 +226,7 @@ class ICaRL(nn.Module):
         exemplar_set.append(exemplar_k)
 
         # test features of the exemplar
-        phi = self.feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
+        phi = feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
         
         summon += phi # update sum of features
         del exemplar_k 

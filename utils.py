@@ -22,7 +22,7 @@ def getHyperparams():
 		"LR": 2,
 		"MOMENTUM": 0.9,
 		"WEIGHT_DECAY": 1e-5,
-		"NUM_EPOCHS": 70,
+		"NUM_EPOCHS": 3,
 		"MILESTONES": [49, 63],
 		"BATCH_SIZE": 128,
 		"DEVICE": 'cuda',
