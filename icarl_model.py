@@ -379,7 +379,7 @@ class ConcatDataset(Dataset):
 
     def __getitem__(self,index):
         if index < self.l1:
-            print("primo")
+            #print("primo")
             _, image,label = self.dataset1[index]
             return image,label
         else:
