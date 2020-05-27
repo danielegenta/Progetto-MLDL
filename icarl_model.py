@@ -115,7 +115,7 @@ class ICaRL(nn.Module):
     with torch.no_grad():
       for exemplar_set in self.exemplar_sets:
         features=[]
-        for exemplar in exemplar_set:
+        for exemplar,_ in exemplar_set:
           print(exemplar)
           print("-----")
           print(exemplar[0])
@@ -232,7 +232,7 @@ class ICaRL(nn.Module):
         
         #label
         #label_k = tensors[i.item()][2].unsqueeze(dim = 0) 
-        exemplar_set.append(exemplar_k)
+        exemplar_set.append((exemplar_k, label))
 
         # test features of the exemplar
         phi = feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
@@ -242,7 +242,7 @@ class ICaRL(nn.Module):
 
     # cleaning
     torch.cuda.empty_cache()
-    self.exemplar_sets.append((exemplar_set, label)) #update exemplar sets with the updated exemplars images
+    self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
 
 
   def augment_dataset_with_exemplars(self, dataset):
