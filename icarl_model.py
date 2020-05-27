@@ -345,6 +345,9 @@ class ICaRL(nn.Module):
 
                #[outputold, onehot_new]
                target = torch.cat((out_old, labels_one_hot),dim=1)
+               print(outputs)
+               print(target)
+               print(len(self.exemplar_sets))
                loss = criterion(outputs,target)
 
             loss.backward()
