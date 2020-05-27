@@ -113,7 +113,7 @@ def writeMetrics(method, seed, accuracies, confusionMatrixData):
   
   # dump to file
   aus = method + '_' + str(seed)
-  filename = 'data_{}'.format(aus)
+  filename = 'data_{}.json'.format(aus)
   with open(filename, 'w') as f:
     json.dump(data, f)
 
