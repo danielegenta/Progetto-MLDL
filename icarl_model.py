@@ -170,7 +170,7 @@ class ICaRL(nn.Module):
       feature = feature.unsqueeze(2) 
       feature = feature.expand_as(means_exemplars) 
 
-      means_exemplars = means_exemplars.to(DEVICE)
+      means_exemplars = means_exemplars.to(self.DEVICE)
       # Nearest prototype
       preds = torch.argmin((feature - means_exemplars).pow(2).sum(1),dim=1)
 
