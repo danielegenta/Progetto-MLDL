@@ -341,8 +341,8 @@ class ICaRL(nn.Module):
             if self.n_known > 0:
 
                labels_one_hot = labels_one_hot.type_as(outputs)[:,len(self.exemplar_sets):]
-               out_old = Variable(torch.sigmoid(old(images))[:,:len(self.exemplar_sets)],requires_grad = False)
-               
+               out_old = Variable(torch.sigmoid(old_net(images))[:,:len(self.exemplar_sets)],requires_grad = False)
+
                #[outputold, onehot_new]
                target = torch.cat((out_old, labels_one_hot),dim=1)
                loss = criterion(outputs,target)
