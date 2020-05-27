@@ -245,7 +245,7 @@ class ICaRL(nn.Module):
         for exemplar in exemplar_images:
             exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
             dataset.append(exemplar_images, index) # nb i do not append the label yet a simple index
-      index += 1
+        index += 1
 
 
   def _one_hot_encode(self, labels, dtype=None, device=None):
