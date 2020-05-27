@@ -333,9 +333,9 @@ class ICaRL(nn.Module):
                labels_one_hot = labels_one_hot.type_as(outputs)[:,self.n_known:]
                out_old = Variable(torch.sigmoid(old_net(images))[:,:self.n_known],requires_grad = False)
                 
-                #[outputold, onehot_new]
-                target = torch.cat((out_old, labels_one_hot),dim=1)
-                loss = criterion(outputs,target)
+               #[outputold, onehot_new]
+               target = torch.cat((out_old, labels_one_hot),dim=1)
+               loss = criterion(outputs,target)
 
             loss.backward()
             optimizer.step()
