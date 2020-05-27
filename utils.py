@@ -80,6 +80,7 @@ def map_to_outputs(labels, reverse_index):
 	elif type(labels) == torch.Tensor:
 		return reverse_index.getNodes(labels)
 
+
 def plotAccuracyTrend(method, data_plot_line, seed):
 	plt.figure(figsize=(20,7))
 	accuracyDF=pd.DataFrame(data_plot_line, columns = ['Classes','Accuracy'])
