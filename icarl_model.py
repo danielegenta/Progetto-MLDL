@@ -99,12 +99,12 @@ class ICaRL(nn.Module):
   def increment_classes(self, n):
         gc.collect()
         """Add n classes in the final fc layer"""
-        in_features = self.fc.in_features
-        out_features = self.fc.out_features
-        weight = self.fc.weight.data
+        in_features = self.feature_extractor.in_features
+        out_features = self.feature_extractor.out_features
+        weight = self.feature_extractor.weight.data
 
-        self.fc = nn.Linear(in_features, out_features + n, bias = False)
-        self.fc.weight.data[:out_features] = weight
+        self.feature_extractor = nn.Linear(in_features, out_features + n, bias = False)
+        self.feature_extractor.weight.data[:out_features] = weight
         self.n_classes += n
 
   # computes the means of each exemplar set
