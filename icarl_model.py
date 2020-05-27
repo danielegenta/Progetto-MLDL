@@ -266,6 +266,7 @@ class ICaRL(nn.Module):
 
     # 4 - combine current train_subset (dataset) with exemplars
     #     to form a new augmented train dataset
+    print(dataset)
     self.augment_dataset_with_exemplars(dataset)
 
     # define the loader for the augmented_dataset
