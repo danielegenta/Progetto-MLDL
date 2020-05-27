@@ -268,6 +268,10 @@ class ICaRL(nn.Module):
     # 3 - increment classes
     #          (add output nodes)
     #          (update n_classes)
+    if self.n_known > 0:
+    #old_net = copy.deepcopy(self.feature_extractor) #copy network before training
+    old_net = copy.deepcopy(net) 
+        
     self.increment_classes(len(new_classes))
 
     # 4 - combine current train_subset (dataset) with exemplars
@@ -301,11 +305,6 @@ class ICaRL(nn.Module):
     scheduler = self.scheduler
 
     criterion = utils.getLossCriterion()
-
-    if self.n_known > 0:
-        #old_net = copy.deepcopy(self.feature_extractor) #copy network before training
-        old_net = copy.deepcopy(net) 
-
 
     cudnn.benchmark # Calling this optimizes runtime
     #current_step = 0
