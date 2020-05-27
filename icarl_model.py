@@ -269,7 +269,6 @@ class ICaRL(nn.Module):
     # 3 - increment classes
     #          (add output nodes)
     #          (update n_classes)
-    print(new_classes)
 
     self.increment_classes(len(new_classes))
 
@@ -285,16 +284,6 @@ class ICaRL(nn.Module):
 
     #self.cuda()
     # 5 - store network outputs with pre-update parameters => q
-    """    
-    q = torch.zeros(len(dataset), self.n_classes)
-    for indices, images, labels in loader:
-        images = images.to(self.DEVICE)
-        labels = labels.to(self.DEVICE)
-        indices = indices.to(self.DEVICE)
-        g = nn.functional.sigmoid(self.forward(images))
-        q_i = g.data
-        q[indices] = q_i
-    """
     # 6 - run network training, with loss function
 
     net = self.feature_extractor
@@ -303,8 +292,10 @@ class ICaRL(nn.Module):
     if self.n_known > 0:
       old_net = copy.deepcopy(net) 
 
-    optimizer = self.optimizer
-    scheduler = self.scheduler
+    optimizer = optim.SGD(net.parameters(), lr=self.LR, weight_decay=self.WEIGHT_DECAY, momentum=self.MOMENTUM)
+
+    # Scheduler
+    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=self.MILESTONES, gamma=self.GAMMA, last_epoch=-1)
 
     criterion = utils.getLossCriterion()
 
@@ -328,7 +319,6 @@ class ICaRL(nn.Module):
             outputs = net(images)
 
             #loss = sum(self.cls_loss(g[:,y], labels[:,y]) for y in range(self.n_known, self.n_classes))
-            print(labels)
             labels_one_hot = utils._one_hot_encode(labels,self.n_classes, self.reverse_index, device=self.DEVICE)
             labels_one_hot.type_as(outputs)
 
