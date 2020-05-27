@@ -287,7 +287,7 @@ class ICaRL(nn.Module):
     # 6 - run network training, with loss function
 
     net = self.feature_extractor
-    net = net.to(self.DEVICE)
+    
 
     if self.n_known > 0:
       old_net = copy.deepcopy(net) 
@@ -300,6 +300,7 @@ class ICaRL(nn.Module):
     criterion = utils.getLossCriterion()
 
     cudnn.benchmark # Calling this optimizes runtime
+    net = net.to(self.DEVICE)
     #current_step = 0
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
