@@ -90,12 +90,11 @@ class CIFAR100(VisionDataset):
             img = self.transform(img)
 
         return index, img, target
-
     def __len__(self):
         return len(self.data)
 
     def getTargets(self):
-    	return set(self.labels)
+        return set(self.labels)
      
     # test
     def get_indices(self, labels):
@@ -146,5 +145,4 @@ class CIFAR100(VisionDataset):
 
     # given a tensors returns an image (used in exemplars)
     #def tensorToImg(self, tensor):
-    #	return Variable(transform(Image.fromarray(img)), volatile=True)
-    
+    #   return Variable(transform(Image.fromarray(img)), volatile=True)

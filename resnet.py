@@ -10,19 +10,20 @@ Taken from https://github.com/hshustc/CVPR19_Incremental_Learning/tree/master/ci
 
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
-    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
-                     padding=1, bias=False)
+    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,padding=1, bias=False)
 
 class BasicBlock(nn.Module):
     expansion = 1
 
     def __init__(self, inplanes, planes, stride=1, downsample=None):
         super(BasicBlock, self).__init__()
+        
         self.conv1 = conv3x3(inplanes, planes, stride)
         self.bn1 = nn.BatchNorm2d(planes)
         self.relu = nn.ReLU(inplace=True)
         self.conv2 = conv3x3(planes, planes)
         self.bn2 = nn.BatchNorm2d(planes)
+
         self.downsample = downsample
         self.stride = stride
 
@@ -138,16 +139,13 @@ class ResNet(nn.Module):
 
         return x
 
-    """def feature_extractor(self,x):
-                    out = self.conv1(x)
-                    out = self.bn1(x)
-                    out = self.relu(x)
-                    out = self.layer1(out)
-                    out = self.layer2(out)
-                    out = self.layer3(out)
-                    out = F.avg_pool2d(out, out.size()[3])
-                    out = out.view(out.size(0), -1)
-                    return out"""
+    def addOutputNodes(self, num_new_outputs):
+        in_features = self.fc.in_features
+        out_features = self.fc.out_features
+        weight = self.fc.weight.data
+
+        self.fc = nn.Linear(in_features, out_features + num_new_outputs)
+        self.fc.weight.data[:out_features] = weight
 
 def resnet20(pretrained=False, **kwargs):
     n = 3
@@ -163,5 +161,3 @@ def resnet56(pretrained=False, **kwargs):
     n = 9
     model = ResNet(Bottleneck, [n, n, n], **kwargs)
     return model
-
-
