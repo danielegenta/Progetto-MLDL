@@ -43,7 +43,8 @@ class ICaRL(nn.Module):
     self.bn = nn.BatchNorm1d(feature_size, momentum=MOMENTUM)
     self.ReLU = nn.ReLU()
 
-    self.fc = nn.Linear(feature_size, n_classes, bias = False)
+    self.fc = resnet32()
+    self.fc.Linear = nn.Sequential()
 
     self.n_classes = n_classes
     self.n_known = 0
