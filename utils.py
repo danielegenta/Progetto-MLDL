@@ -80,15 +80,21 @@ def map_to_outputs(labels, reverse_index):
 	elif type(labels) == torch.Tensor:
 		return reverse_index.getNodes(labels)
 
-def plotAccuracyTrend(data_plot_line):
+def plotAccuracyTrend(method, data_plot_line):
 	plt.figure(figsize=(20,7))
 	accuracyDF=pd.DataFrame(data_plot_line, columns = ['Classes','Accuracy'])
-	ax = sns.lineplot(x="Classes", y="Accuracy",data=accuracyDF)
-	plt.title("All Group Sequential Accuracy")
+	ax = sns.lineplot(x="Classes", y="Accuracy",data=accuracyDF, markers = True)
+	ax.set_yticks(major_ticks)
+	ax.set_yticks(minor_ticks, minor=True)
+	ax.set_xticks(np.arange(10,110,10))
+	ax.set_xlim(xmin=9,xmax=101)
+	plt.legend(['Accuracy {}'.format(method)])
+	ax.grid(axis='y')
+	plt.title("Accuracies against seen classes {}".format(method))
 	plt.show()
 
 def plotConfusionMatrix(confusionMatrixData):
-	fig,ax=plt.subplots(figsize=(7,5))
+	fig,ax=plt.subplots(figsize=(10,10))
 	sns.heatmap(confusionMatrixData,cmap='terrain',ax=ax)
 	plt.ylabel('True label')
 	plt.xlabel('Predicted label')
