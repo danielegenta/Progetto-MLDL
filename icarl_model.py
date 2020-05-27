@@ -222,13 +222,14 @@ class ICaRL(nn.Module):
 
     exemplar_set = []
     exemplar_features = [] # list of Variables of shape (feature_size,)
+    summon = torch.zeros(1,features_s.size()[1]).to(self.DEVICE) #(1,num_features)
     for k in range(1, (m + 1)):
-        S = torch.cat([summa]*features_s.size()[0]) # second addend, features in the exemplar set
+        S = torch.cat([summon]*features_s.size()[0]) # second addend, features in the exemplar set
         i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
         exemplar_k = tensors[i.item()][0].unsqueeze(dim=0) # take the image
         exemplar_set.append(exemplar_k)
         phi =  feature_extractor(exemplar_k.to(self.DEVICE))
-        summa = summa + phi # update sum of features
+        summon = summon + phi # update sum of features
         del exemplar_k 
 
     # cleaning
