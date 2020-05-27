@@ -300,8 +300,6 @@ class ICaRL(nn.Module):
 
     if len(self.exemplar_sets) > 0:
       old_net = copy.deepcopy(net) 
-      for i in range(0, len(augmented_dataset)):
-        print(augmented_dataset.__getitem__(i))
     #current_step = 0
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
@@ -318,7 +316,7 @@ class ICaRL(nn.Module):
             optimizer.zero_grad() # Zero-ing the gradients
 
             # Forward pass to the network
-            outputs = net(images)
+            outputs = net.fc(images)
 
             #loss = sum(self.cls_loss(g[:,y], labels[:,y]) for y in range(self.n_known, self.n_classes))
             labels_one_hot = utils._one_hot_encode(labels,self.n_classes, self.reverse_index, device=self.DEVICE)
@@ -377,13 +375,14 @@ class ConcatDataset(Dataset):
         self.l1 = len(dataset1)
         self.l2 = len(dataset2)
 
+        print(self.l1)
+        print(self.l2)
+
     def __getitem__(self,index):
         if index < self.l1:
-            #print("primo")
             _, image,label = self.dataset1[index]
             return image,label
         else:
-            print("secondo")
             image, label = self.dataset2[index - self.l1]
             image = self.transform(image)
             return image,label
