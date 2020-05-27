@@ -44,7 +44,7 @@ class ICaRL(nn.Module):
     self.ReLU = nn.ReLU()
 
     self.fc = resnet32()
-    self.fc.Linear = nn.Sequential()
+    self.fc = nn.Linear(feature_size, n_classes, bias = False)
 
     self.n_classes = n_classes
     self.n_known = 0
@@ -99,12 +99,12 @@ class ICaRL(nn.Module):
   def increment_classes(self, n):
         gc.collect()
         """Add n classes in the final fc layer"""
-        in_features = self.feature_extractor.fc.in_features
-        out_features = self.feature_extractor.fc.out_features
-        weight = self.feature_extractor.fc.weight.data
+        in_features = self.fc.in_features
+        out_features = self.fc.out_features
+        weight = self.fc.weight.data
 
-        self.feature_extractor.fc = nn.Linear(in_features, out_features + n, bias = False)
-        self.feature_extractor.fc.weight.data[:out_features] = weight
+        self.fc = nn.Linear(in_features, out_features + n, bias = False)
+        self.fc.weight.data[:out_features] = weight
         self.n_classes += n
 
   # computes the means of each exemplar set
