@@ -96,10 +96,10 @@ class ICaRL(nn.Module):
         """Add n classes in the final fc layer"""
         in_features = self.feature_extractor.linear.in_features
         out_features = self.feature_extractor.linear.out_features
-        weight = self.feature_extractor.linear.weight.data
+        #weight = self.feature_extractor.linear.weight.data
 
         self.feature_extractor.linear = nn.Linear(in_features, out_features + n, bias = False)
-        self.fc.weight.data[:out_features] = weight
+        #self.fc.weight.data[:out_features] = weight
         self.n_classes += n
 
   # computes the means of each exemplar set
