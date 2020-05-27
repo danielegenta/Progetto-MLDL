@@ -46,7 +46,7 @@ class ICaRL(nn.Module):
     #self.fc = resnet32()
     #self.fc = nn.Linear(feature_size, n_classes, bias = False)
 
-    self.fc = ResNet18()
+    self.fc = resnet32()
     self.fc.linear = nn.Sequential()
 
     self.n_classes = n_classes
