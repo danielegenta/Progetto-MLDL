@@ -345,10 +345,10 @@ class ICaRL(nn.Module):
         scheduler.step()
         print("LOSS: ",loss)
 
-    gc.collect()
-    del net
-    torch.no_grad()
-    torch.cuda.empty_cache()
+    #gc.collect()
+    #del net
+    #torch.no_grad()
+    #torch.cuda.empty_cache()
 
 
   # implementation of alg. 5 of icarl paper
