@@ -348,6 +348,8 @@ class ICaRL(nn.Module):
 
                #[outputold, onehot_new]
                target = torch.cat((out_old, labels_one_hot),dim=1)
+               print(outputs.size)
+               print(target.size)
                loss = criterion(outputs,target)
 
             loss.backward()
