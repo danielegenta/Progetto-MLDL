@@ -84,7 +84,7 @@ def map_to_outputs(labels, reverse_index):
 def plotAccuracyTrend(method, data_plot_line, seed):
 	plt.figure(figsize=(20,7))
 	accuracyDF=pd.DataFrame(data_plot_line, columns = ['Classes','Accuracy'])
-	ax = sns.lineplot(x="Classes", y="Accuracy",data=accuracyDF, markers = ['o'])
+	ax = sns.lineplot(x="Classes", y="Accuracy",data=accuracyDF, marker = ['o'])
 	ax.minorticks_on()
 	ax.set_xticks(np.arange(10,110,10))
 	ax.set_xlim(xmin=9, xmax=101)
