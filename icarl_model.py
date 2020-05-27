@@ -112,14 +112,14 @@ class ICaRL(nn.Module):
     torch.cuda.empty_cache()
 
     exemplar_means = []
-    feature_extractor = self.fc.to(DEVICE)
+    feature_extractor = self.fc.to(self.DEVICE)
     feature_extractor.train(False)
 
     with torch.no_grad():
       for exemplar_set in self.exemplar_sets:
         features=[]
         for exemplar in exemplar_set:
-          exemplar = exemplar.to(DEVICE)
+          exemplar = exemplar.to(self.DEVICE)
           feature = feature_extractor(exemplar)
           features.append(feature)
 
@@ -151,7 +151,7 @@ class ICaRL(nn.Module):
       torch.cuda.empty_cache()
 
       batch_imgs_size = batch_imgs.size(0)
-      feature_extractor = self.fc.to(DEVICE)
+      feature_extractor = self.fc.to(self.DEVICE)
       feature_extractor.train(False)
 
       means_exemplars = torch.cat(self.exemplar_means, dim=0)
@@ -187,7 +187,7 @@ class ICaRL(nn.Module):
     torch.cuda.empty_cache()
     gc.collect()
 
-    feature_extractor = self.fc.to(DEVICE)
+    feature_extractor = self.fc.to(self.DEVICE)
     feature_extractor.train(False)
 
     """Construct an exemplar set for image set
@@ -206,8 +206,8 @@ class ICaRL(nn.Module):
     loader = DataLoader(tensors,batch_size=BATCH_SIZE,shuffle=True,drop_last=False,num_workers = 4)
 
     for _, images, labels in loader:
-      images = images.to(DEVICE)
-      labels = labels.to(DEVICE)
+      images = images.to(self.DEVICE)
+      labels = labels.to(self.DEVICE)
       feature = self.feature_extractor(images) 
 
       # is this line important? it yields an error
