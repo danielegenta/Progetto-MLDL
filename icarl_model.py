@@ -24,6 +24,8 @@ from Cifar100.resnet import resnet32
 from Cifar100.Dataset.cifar100 import CIFAR100
 import copy
 import gc
+from torchvision import transforms
+
 
 from Cifar100 import utils
 
@@ -104,9 +106,90 @@ class ICaRL(nn.Module):
         self.fc.weight.data[:out_features] = weight
         self.n_classes += n
 
+  # computes the means of each exemplar set
+  def compute_means(self):
+    torch.no_grad()  
+    torch.cuda.empty_cache()
+
+    exemplar_means = []
+    feature_extractor = self.fc.to(DEVICE)
+    feature_extractor.train(False)
+
+    with torch.no_grad():
+      for exemplar_set in self.exemplar_sets:
+        features=[]
+        for exemplar in exemplar_set:
+          exemplar = exemplar.to(DEVICE)
+          feature = feature_extractor(exemplar)
+          features.append(feature)
+
+          # cleaning 
+          torch.no_grad()
+          torch.cuda.empty_cache()
+
+        features = torch.stack(features) # (num_exemplars,num_features)
+        mean_exemplar = features.mean(0) 
+        mean_exemplar.data = mean_exemplar.data / mean_exemplar.data.norm() # Normalize
+        mean_exemplar = mean_exemplar.to('cpu')
+        exemplar_means.append(mean_exemplar)
+
+        # cleaning
+        torch.no_grad()  
+        torch.cuda.empty_cache()
+
+    self.exemplar_means = exemplar_means
+
+
+  def classify(self, batch_imgs):
+      """Classify images by neares-means-of-exemplars
+      Args:
+          batch_imgs: input image batch
+      Returns:
+          preds: Tensor of size (batch_size,)
+      """
+      torch.no_grad()
+      torch.cuda.empty_cache()
+
+      batch_imgs_size = batch_imgs.size(0)
+      feature_extractor = self.fc.to(DEVICE)
+      feature_extractor.train(False)
+
+      means_exemplars = torch.cat(self.exemplar_means, dim=0)
+      means_exemplars = torch.stack([means_exemplars] * batch_imgs_size)
+      means_exemplars = means.transpose(1, 2) 
+
+      feature = feature_extractor(batch_imgs) 
+      aus_normalized_features = []
+      for el in feature: # Normalize
+          el.data = el.data / el.data.norm()
+          aus_normalized_features.append(el)
+
+      feature = torch.stack(aus_normalized_features,dim=0)
+
+      feature = feature.unsqueeze(2) 
+      feature = feature.expand_as(means_exemplars) 
+
+      means_exemplars = means_exemplars.to(DEVICE)
+      # Nearest prototype
+      preds = torch.argmin((feature - means_exemplars).pow(2).sum(1),dim=1)
+
+      # cleaning
+      torch.no_grad()
+      torch.cuda.empty_cache()
+      gc.collect()
+
+      return preds
+
   # implementation of alg. 4 of icarl paper
   # iCaRL ConstructExemplarSet
   def construct_exemplar_set(self, tensors, m, transform):
+    torch.no_grad()
+    torch.cuda.empty_cache()
+    gc.collect()
+
+    feature_extractor = self.fc.to(DEVICE)
+    feature_extractor.train(False)
+
     """Construct an exemplar set for image set
     Args:
         images: np.array containing images of a class
@@ -120,48 +203,48 @@ class ICaRL(nn.Module):
                     feature = feature / np.linalg.norm(feature) # Normalize
                     features.append(feature[0])
     """
-    loader = DataLoader(tensors,self.BATCH_SIZE,True,drop_last=False) #128 = batch size
+    loader = DataLoader(tensors,batch_size=BATCH_SIZE,shuffle=True,drop_last=False,num_workers = 4)
+
     for _, images, labels in loader:
       images = images.to(DEVICE)
       labels = labels.to(DEVICE)
-      feature = self.feature_extractor(images)  #(batchsize, 2048)
+      feature = self.feature_extractor(images) 
 
       # is this line important? it yields an error
       #feature = feature / np.linalg.norm(feature) # Normalize
 
       features.append(feature)
 
-    features = np.array(features)
-    class_mean = np.mean(features, axis=0)
-    class_mean = class_mean / np.linalg.norm(class_mean) # Normalize
+    features_s = torch.cat(features)
+    class_mean = features_s.mean(0)
+    class_mean = torch.stack([mean]*features_s.size()[0])
+    torch.cuda.empty_cache()
 
     exemplar_set = []
     exemplar_features = [] # list of Variables of shape (feature_size,)
-    for k in range(1, int(m + 1)):
-        S = np.sum(exemplar_features, axis=0) # second addend, features in the exemplar set
-        phi = features # first addend, all features
-        mu = class_mean # current class mean
-        mu_p = 1/k * (phi + S) 
-        mu_p = mu_p / np.linalg.norm(mu_p) # normalize
-        i = np.argmin(np.sqrt(np.sum((mu - mu_p) ** 2, axis=1))) # finding the argming means finding the index of the image of the current class 
-                                                                 # that'll be added to the exemplar set
-        exemplar_set.append(images[i])
-        exemplar_features.append(features[i])
-        """
-        print "Selected example", i
-        print "|exemplar_mean - class_mean|:",
-        print np.linalg.norm((np.mean(exemplar_features, axis=0) - class_mean))
-        #features = np.delete(features, i, axis=0)
-        """
+    for k in range(1, (m + 1)):
+        S = torch.cat([summa]*features_s.size()[0]) # second addend, features in the exemplar set
+        i = torch.argmin((mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
+        exemplar_k = tensors[i.item()][0].unsqueeze(dim=0) # take the image
+        exemplar_set.append(exemplar_k)
+        phi =  feature_extractor(exemplar_k.to(DEVICE))
+        summa = summa + phi # update sum of features
+        del exemplar_k 
 
-    self.exemplar_sets.append(np.array(exemplar_set)) #update exemplar sets with the updated exemplars images
+    # cleaning
+    torch.cuda.empty_cache()
+    self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
 
 
   def augment_dataset_with_exemplars(self, dataset):
+    transformToImg = transforms.ToPILImage()
     for y, P_y in enumerate(self.exemplar_sets): #for each class and exemplar set for that class
         exemplar_images = P_y
         exemplar_labels = [y] * len(P_y) #i create a vector of labels [class class class ...] for each class in the exemplar set
-        dataset.append(exemplar_images, exemplar_labels)
+        for exemplar in exemplar_images:
+            exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
+            dataset.append(exemplar_images, y)
+
 
   def _one_hot_encode(self, labels, dtype=None, device=None):
     enconded = torch.zeros(self.n_classes, len(labels), dtype=dtype, device=device)
@@ -174,7 +257,7 @@ class ICaRL(nn.Module):
     # 1 - retrieve the classes from the dataset (which is the current train_subset)
     # 2 - retrieve the new classes
     # 1,2 are done in the main_icarl
-
+    gc.collect()
 
     # 3 - increment classes
     #          (add output nodes)
@@ -188,7 +271,9 @@ class ICaRL(nn.Module):
     # define the loader for the augmented_dataset
     loader = DataLoader(dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
 
+    self.cuda()
     # 5 - store network outputs with pre-update parameters => q
+    """    
     q = torch.zeros(len(dataset), self.n_classes)
     for indices, images, labels in loader:
         images = images.to(self.DEVICE)
@@ -197,19 +282,33 @@ class ICaRL(nn.Module):
         g = nn.functional.sigmoid(self.forward(images))
         q_i = g.data
         q[indices] = q_i
-
+    """
     # 6 - run network training, with loss function
+
+    net = self.feature_extractor
+    net = net.to(self.DEVICE)
+
     optimizer = self.optimizer
+    scheduler = self.scheduler
+
+    criterion = utils.getLossCriterion()
+
+    if self.n_known > 0:
+        #old_net = copy.deepcopy(self.feature_extractor) #copy network before training
+        old_net = copy.deepcopy(self) #test
 
 
     cudnn.benchmark # Calling this optimizes runtime
     #current_step = 0
     for epoch in range(NUM_EPOCHS):
+        print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
         for indices, images, labels in loader:
             # Bring data over the device of choice
             images = images.to(self.DEVICE)
-            labels = self._one_hot_encode(labels, device=self.DEVICE)
+            #labels = self._one_hot_encode(labels, device=self.DEVICE)
+            labels = labels.to(self.DEVICE)
             indices = indices.to(self.DEVICE)
+            net.train()
 
             # PyTorch, by default, accumulates gradients after each backward pass
             # We need to manually set the gradients to zero before starting a new iteration
@@ -218,10 +317,18 @@ class ICaRL(nn.Module):
             # Forward pass to the network
             outputs = self.forward(images)
 
-            # Classification loss for new classes
-            loss = sum(self.cls_loss(g[:,y], labels[:,y]) for y in range(self.n_known, self.n_classes))
+            #loss = sum(self.cls_loss(g[:,y], labels[:,y]) for y in range(self.n_known, self.n_classes))
+            labels_one_hot = utils._one_hot_encode(labels,self.n_classes, self.reverse_index, device=self.DEVICE)
+            labels_one_hot.type_as(outputs)
 
-            # Distilation loss for old classes
+            # test
+            #labels_one_hot = nn.functional.one_hot(labels, self.n_classes)
+            # Classification loss for new classes
+
+            # Loss = only classification on new classes
+            if self.n_known == 0:
+                loss = criterion(outputs, labels_onehot)
+            # Distilation loss for old classes, class loss on new classes
             if self.n_known > 0:
                 # g = F.sigmoid(g)
                 q_i = q[indices]
@@ -233,6 +340,13 @@ class ICaRL(nn.Module):
 
             loss.backward()
             optimizer.step()
+
+        scheduler.step()
+
+    gc.collect()
+    del net
+    torch.no_grad()
+    torch.cuda.empty_cache()
 
 
   # implementation of alg. 5 of icarl paper
