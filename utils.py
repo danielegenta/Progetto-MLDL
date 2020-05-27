@@ -27,7 +27,7 @@ def getHyperparams():
 		"BATCH_SIZE": 128,
 		"DEVICE": 'cuda',
 		"GAMMA": 0.2,
-		"SEED": 30,
+		"SEED": 30, #use 30, 42, 16
 		"LOG_FREQUENCY": 10,
 		"NUM_CLASSES": 100
 	}
@@ -80,7 +80,7 @@ def map_to_outputs(labels, reverse_index):
 	elif type(labels) == torch.Tensor:
 		return reverse_index.getNodes(labels)
 
-def plotAccuracyTrend(method, data_plot_line):
+def plotAccuracyTrend(method, data_plot_line, seed):
 	plt.figure(figsize=(20,7))
 	accuracyDF=pd.DataFrame(data_plot_line, columns = ['Classes','Accuracy'])
 	ax = sns.lineplot(x="Classes", y="Accuracy",data=accuracyDF, markers = True)
@@ -90,14 +90,15 @@ def plotAccuracyTrend(method, data_plot_line):
 	ax.set_xlim(xmin=9,xmax=101)
 	plt.legend(['Accuracy {}'.format(method)])
 	ax.grid(axis='y')
-	plt.title("Accuracies against seen classes {}".format(method))
+	plt.title("Accuracies against seen classes {} - seed: {}".format(method, seed))
 	plt.show()
 
-def plotConfusionMatrix(confusionMatrixData):
+def plotConfusionMatrix(method, confusionMatrixData, seed):
 	fig,ax=plt.subplots(figsize=(10,10))
 	sns.heatmap(confusionMatrixData,cmap='terrain',ax=ax)
 	plt.ylabel('True label')
 	plt.xlabel('Predicted label')
+	plt.title("Confusion Matrix {}".format(method, seed))
 	plt.show()
 
 # Write down the metrics (accuracy trand and confusion matrix)
