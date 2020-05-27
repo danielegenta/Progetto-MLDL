@@ -238,14 +238,14 @@ class ICaRL(nn.Module):
 
   def augment_dataset_with_exemplars(self, dataset):
     transformToImg = transforms.ToPILImage()
-    print(self.exemplar_sets)
-    print(dataset)
-    for y, P_y in enumerate(self.exemplar_sets): #for each class and exemplar set for that class
+    index = 0
+    for exemplar_set in enumerate(self.exemplar_sets): #for each class and exemplar set for that class
         exemplar_images = P_y
         exemplar_labels = [y] * len(P_y) #i create a vector of labels [class class class ...] for each class in the exemplar set
         for exemplar in exemplar_images:
             exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
-            dataset.append(exemplar_images, y) # y = label of the class
+            dataset.append(exemplar_images, index) # nb i do not append the label yet a simple index
+      index += 1
 
 
   def _one_hot_encode(self, labels, dtype=None, device=None):
