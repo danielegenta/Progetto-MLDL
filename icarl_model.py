@@ -243,7 +243,8 @@ class ICaRL(nn.Module):
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
         for exemplar in exemplar_set:
             exemplar = exemplar.squeeze()
-            exemplar = Image.fromarray(np.array(exemplar.squeeze())) # Return a PIL image
+            print(exemplar.size())
+            exemplar = Image.fromarray(np.array(exemplar)) # Return a PIL image
             aus_dataset.append((exemplar, index)) # nb i do not append the label yet a simple index, 0 is just a placeholder
         index += 1
 
