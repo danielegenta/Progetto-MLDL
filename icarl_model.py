@@ -265,11 +265,12 @@ class ICaRL(nn.Module):
 
     # 4 - combine current train_subset (dataset) with exemplars
     #     to form a new augmented train dataset
+    # join the datasets
     exemplars_dataset = self.augment_dataset_with_exemplars(dataset)
     augmented_dataset = ConcatDataset(dataset, exemplars_dataset, self.transform)
 
-    # join the datasets
-
+    # [debug]
+    print(self.exemplars_dataset)
     
     # 6 - run network training, with loss function
 
