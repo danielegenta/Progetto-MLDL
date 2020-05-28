@@ -313,9 +313,9 @@ class ICaRL(nn.Module):
 
             # Forward pass to the network
             outputs = net(images)
-            if self.n_known > 0:
+            if self.n_known == 0:
               print(images)
-
+            break
             #print(outputs.size())
 
             labels_one_hot = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
