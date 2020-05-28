@@ -110,7 +110,9 @@ class ICaRL(nn.Module):
         for exemplar, label in exemplar_set:
           exemplar = exemplar.to(self.DEVICE)
           feature = feature_extractor(exemplar)
-          feature.data = feature.data / feature.data.norm() # Normalize
+
+          #feature.data = feature.data / feature.data.norm() # Normalize
+
           features.append(feature)
 
           # cleaning 
@@ -199,14 +201,14 @@ class ICaRL(nn.Module):
         labels = labels.to(self.DEVICE)
         feature = feature_extractor(images) 
 
-        feature = feature / np.linalg.norm(feature.cpu()) # Normalize
+        #feature = feature / np.linalg.norm(feature.cpu()) # Normalize
         
         features.append(feature)
 
     features_s = torch.cat(features)
     class_mean = features_s.mean(0)
 
-    class_mean = class_mean / np.linalg.norm(class_mean.cpu()) # Normalize
+    #class_mean = class_mean / np.linalg.norm(class_mean.cpu()) # Normalize
 
     class_mean = torch.stack([class_mean]*features_s.size()[0])
     torch.cuda.empty_cache()
