@@ -1,4 +1,5 @@
 """
+    
     This class implements the main model of iCaRL 
     and all the methods regarding the exemplars
 
@@ -6,9 +7,7 @@
     - feature extractor (a convolutional NN) => resnet32 optimized on cifar100
     - classifier => a FC layer OR a non-parametric classifier (NME)
 
-    main ref: https://github.com/donlee90/icarl
 """
-
 
 import torch
 import torch.nn as nn
@@ -20,21 +19,18 @@ from PIL import Image
 from torch.utils.data import DataLoader
 from torch.backends import cudnn
 from torch.autograd import Variable
-from Cifar100.resnet import resnet32
-from Cifar100.Dataset.cifar100 import CIFAR100
 import copy
-import gc
+import gc #extensive use in order to manage memory issues
 from torchvision import transforms
 from PIL import Image
 from torchvision.transforms import ToPILImage 
 
 from Cifar100 import utils
+from Cifar100.resnet import resnet32
+from Cifar100.Dataset.cifar100 import CIFAR100
 
 
-# Hyper Parameters
-# ...
-
-# feature size: 2048
+# feature_size: 2048, why?
 # n_classes: 10 => 100
 class ICaRL(nn.Module):
   def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM,K, transform, reverse_index = None):
@@ -69,37 +65,35 @@ class ICaRL(nn.Module):
 
     # List containing exemplar_sets
     # Each exemplar_set is a np.array of N images
-    # with shape (N, C, H, W)
     self.exemplar_sets = []
 
-    # Learning method
     
-    # for the classification loss we have two alternatives
+    # for the classification/distillation loss we have two alternatives
     # 1- BCE loss with Logits (reduction could be mean or sum)
     # 2- BCE loss + sigmoid
     """self.cls_loss = nn.BCEWithLogitsLoss(reduction = 'mean')
                 self.dist_loss = nn.BCEWithLogitsLoss(reduction = 'mean')"""
-    
+    # actually we use just one loss as explained on the forum
     
 
-    # Means of exemplars
+    # Means of exemplars (cntroids)
     self.compute_means = True
     self.exemplar_means = []
   
   # increment the number of classes considered by the net
+  # incremental learning approach, 0,10..100
   def increment_classes(self, n):
         gc.collect()
 
-        """Add n classes in the final fc layer"""
         in_features = self.net.fc.in_features
         out_features = self.net.fc.out_features
         weights = self.net.fc.weight.data
 
-        self.net.fc = nn.Linear(in_features, out_features + n, bias = False)
+        self.net.fc = nn.Linear(in_features, out_features + n, bias = False) #add 10 classes to the fc last layer
         self.net.fc.weight.data[:out_features] = weights
-        self.n_classes += n
+        self.n_classes += n #icrement #classes considered
 
-  # computes the means of each exemplar set
+  # computes the mean of each exemplar set
   def computeMeans(self):
     torch.no_grad()  
     torch.cuda.empty_cache()
@@ -114,19 +108,16 @@ class ICaRL(nn.Module):
         for exemplar, label in exemplar_set:
           exemplar = exemplar.to(self.DEVICE)
           feature = feature_extractor(exemplar)
-
-          # ---- new
           feature.data = feature.data / feature.data.norm() # Normalize
-
           features.append(feature)
 
           # cleaning 
           torch.no_grad()
           torch.cuda.empty_cache()
 
-        features = torch.stack(features) # (num_exemplars,num_features)
+        features = torch.stack(features) #(num_exemplars,num_features)
         mean_exemplar = features.mean(0) 
-        mean_exemplar.data = mean_exemplar.data / mean_exemplar.data.norm() # Normalize
+        mean_exemplar.data = mean_exemplar.data / mean_exemplar.data.norm() # Re-normalize
         mean_exemplar = mean_exemplar.to('cpu')
         exemplar_means.append(mean_exemplar)
 
@@ -136,9 +127,9 @@ class ICaRL(nn.Module):
 
     self.exemplar_means = exemplar_means
 
-
+  # NME classification from iCaRL paper
   def classify(self, batch_imgs):
-      """Classify images by neares-means-of-exemplars
+      """Classify images by nearest-mean-of-exemplars
       Args:
           batch_imgs: input image batch
       Returns:
@@ -167,6 +158,7 @@ class ICaRL(nn.Module):
       feature = feature.expand_as(means_exemplars) 
 
       means_exemplars = means_exemplars.to(self.DEVICE)
+
       # Nearest prototype
       preds = torch.argmin((feature - means_exemplars).pow(2).sum(1),dim=1)
 
@@ -180,6 +172,13 @@ class ICaRL(nn.Module):
   # implementation of alg. 4 of icarl paper
   # iCaRL ConstructExemplarSet
   def construct_exemplar_set(self, tensors, m, transform,label):
+    """
+      Args:
+          tensors: train_subset containing a single label
+          m: number of exemplars allowed/exemplar set (class)
+          transform: @TOREMOVE
+          label: considered class
+    """
     torch.no_grad()
     torch.cuda.empty_cache()
     gc.collect()
@@ -187,10 +186,6 @@ class ICaRL(nn.Module):
     feature_extractor = self.feature_extractor.to(self.DEVICE)
     feature_extractor.train(False)
 
-    """Construct an exemplar set for image set
-    Args:
-        images: np.array containing images of a class
-    """
     # Compute and cache features for each example
     features = []
 
@@ -202,7 +197,6 @@ class ICaRL(nn.Module):
         labels = labels.to(self.DEVICE)
         feature = feature_extractor(images) 
 
-        # ---new
         feature = feature / np.linalg.norm(feature.cpu()) # Normalize
         
         features.append(feature)
@@ -210,7 +204,6 @@ class ICaRL(nn.Module):
     features_s = torch.cat(features)
     class_mean = features_s.mean(0)
 
-    # --- new
     class_mean = class_mean / np.linalg.norm(class_mean.cpu()) # Normalize
 
     class_mean = torch.stack([class_mean]*features_s.size()[0])
@@ -226,17 +219,25 @@ class ICaRL(nn.Module):
         
         exemplar_set.append((exemplar_k, label))
 
-        # test features of the exemplar
+        # features of the exemplar k
         phi = feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
         summon += phi # update sum of features
         del exemplar_k 
 
     # cleaning
     torch.cuda.empty_cache()
+
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
 
-
+  # creation of an auxiliary dataset (actually a simple list) that will be concatenated
+  # to the train_subset
   def augment_dataset_with_exemplars(self, dataset):
+    """
+      Args:
+          dataset: @TOREMOVE not used
+      return:
+          auxiliary dataset of exemplars (image format)
+    """
     transformToImg = transforms.ToPILImage()
     aus_dataset = []
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
@@ -245,12 +246,6 @@ class ICaRL(nn.Module):
             img = transformToImg(exemplar.squeeze()).convert("RGB")
             aus_dataset.append((img, label))
     return aus_dataset 
-
-  def _one_hot_encode(self, labels, dtype=None, device=None):
-    enconded = torch.zeros(self.n_classes, len(labels), dtype=dtype, device=device)
-    for i, l in enumerate(labels):
-      enconded[i, l] = 1
-    return enconded
 
   def update_representation(self, dataset, new_classes):
     #print(new_classes)
@@ -348,10 +343,20 @@ class ICaRL(nn.Module):
             self.exemplar_sets[y] = P_y[:m] 
 
 
+
+
 # ----------
+
 from torch.utils.data import Dataset
 """
   Merge two different datasets (train and exemplars in our case)
+  format:
+  train
+  --------
+  exemplars
+
+  train leans on cifar100
+  exemplars is managed here (exemplar_transform is performed)
 """
 class ConcatDataset(Dataset):
     
@@ -364,11 +369,11 @@ class ConcatDataset(Dataset):
 
     def __getitem__(self,index):
         if index < self.l1:
-            _, image,label = self.dataset1[index]
+            _, image,label = self.dataset1[index] #here it leans on cifar100 get item
             return image,label
         else:
             image, label = self.dataset2[index - self.l1]
-            image = self.transform(image)
+            image = self.transform(image) # exemplar transform defined in the main
             return image,label
 
     def __len__(self):
