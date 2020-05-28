@@ -40,7 +40,7 @@ class ICaRL(nn.Module):
   def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM,K, transform, reverse_index = None):
     super(ICaRL, self).__init__()
     self.feature_extractor = resnet32()
-    self.feature_extractor.linear = nn.Linear(self.feature_extractor.fc.in_features, n_classes)
+    self.feature_extractor.linear = nn.Linear(self.feature_extractor.fc.in_features, 100)
     
     #self.bn = nn.BatchNorm1d(feature_size, momentum=MOMENTUM)
     #self.ReLU = nn.ReLU()
@@ -260,7 +260,7 @@ class ICaRL(nn.Module):
 
   # just a start to make the test work
   def update_representation(self, dataset, new_classes):
-    print(new_classes)
+    #print(new_classes)
     # 1 - retrieve the classes from the dataset (which is the current train_subset)
     # 2 - retrieve the new classes
     # 1,2 are done in the main_icarl
@@ -270,7 +270,8 @@ class ICaRL(nn.Module):
     #          (add output nodes)
     #          (update n_classes)
 
-    self.increment_classes(len(new_classes))
+    #self.increment_classes(len(new_classes))
+    self.n_classes += len(new_classes)
 
     # 4 - combine current train_subset (dataset) with exemplars
     #     to form a new augmented train dataset
@@ -300,15 +301,12 @@ class ICaRL(nn.Module):
 
     if len(self.exemplar_sets) > 0:
       old_net = copy.deepcopy(net) 
-    #current_step = 0
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
         for images, labels in loader:
             # Bring data over the device of choice
             images = images.to(self.DEVICE)
-            #labels = self._one_hot_encode(labels, device=self.DEVICE)
             labels = labels.to(self.DEVICE)
-            #indices = indices.to(self.DEVICE)
             net.train()
 
             # PyTorch, by default, accumulates gradients after each backward pass
