@@ -243,7 +243,7 @@ class ICaRL(nn.Module):
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
         for exemplar in exemplar_set:
             #exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
-            aus_dataset.append((exemplar, index)) # nb i do not append the label yet a simple index, 0 is just a placeholder
+            aus_dataset.append((exemplar.squeeze(), index)) # nb i do not append the label yet a simple index, 0 is just a placeholder
         index += 1
 
     return aus_dataset 
