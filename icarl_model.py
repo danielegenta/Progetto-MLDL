@@ -331,8 +331,8 @@ class ICaRL(nn.Module):
     self.feature_extractor = copy.deepcopy(net)
     self.feature_extractor.fc = nn.Sequential()
     del net
-    torch.no_grad()
-    torch.cuda.empty_cache()
+    #torch.no_grad()
+    #torch.cuda.empty_cache()
 
 
   # implementation of alg. 5 of icarl paper
