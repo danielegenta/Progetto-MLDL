@@ -203,7 +203,7 @@ class ICaRL(nn.Module):
         feature = feature_extractor(images) 
 
         # ---new
-        feature = feature / np.linalg.norm(feature) # Normalize
+        feature = feature / np.linalg.norm(feature.cpu()) # Normalize
         
         features.append(feature)
 
