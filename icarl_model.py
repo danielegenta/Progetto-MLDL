@@ -316,8 +316,11 @@ class ICaRL(nn.Module):
             if self.n_known > 0:
               print(outputs.size())
 
-            labels_one_hot = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
-            labels_one_hot = labels_one_hot.type_as(outputs)
+            #labels_one_hot = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
+            #labels_one_hot = labels_one_hot.type_as(outputs)
+            # just a test
+            labels_one_hot = nn.functional.one_hot(labels,100).type_as(outputs)
+
 
             # test
             #labels_one_hot = nn.functional.one_hot(labels, self.n_classes)
