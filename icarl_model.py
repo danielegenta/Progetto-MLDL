@@ -259,8 +259,7 @@ class ICaRL(nn.Module):
     #          (add output nodes)
     #          (update n_classes)
 
-    #self.increment_classes(len(new_classes))
-    self.n_classes += len(new_classes)
+    self.increment_classes(len(new_classes))
 
     # 4 - combine current train_subset (dataset) with exemplars
     #     to form a new augmented train dataset
