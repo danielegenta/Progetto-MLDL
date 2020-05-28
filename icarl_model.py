@@ -40,15 +40,10 @@ class ICaRL(nn.Module):
   def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM,K, transform, reverse_index = None):
     super(ICaRL, self).__init__()
     self.net = resnet32()
-    self.net.linear = nn.Linear(feature_size, 100)
-    
-    #self.bn = nn.BatchNorm1d(feature_size, momentum=MOMENTUM)
-    #self.ReLU = nn.ReLU()
-    #self.fc = resnet32()
-    #self.fc = nn.Linear(feature_size, n_classes, bias = False)
+    self.net.fc = nn.Linear(feature_size, n_classes)
 
-    self.fc = resnet32()
-    self.fc.linear = nn.Sequential()
+    self.feature_extractor = resnet32()
+    self.feature_extractor.fc = nn.Sequential()
 
     self.n_classes = n_classes
     self.n_known = 0
@@ -96,13 +91,12 @@ class ICaRL(nn.Module):
         gc.collect()
 
         """Add n classes in the final fc layer"""
-        in_features = self.net.linear.in_features
-        out_features = self.net.linear.out_features
-        #weight = self.net.linear.weight.data
+        in_features = self.net.fc.in_features
+        out_features = self.net.fc.out_features
+        weight = self.net.fc.weight.data
 
-        self.net.linear = nn.Linear(in_features, out_features + n, bias = False)
-        
-        #self.fc.weight.data[:out_features] = weight
+        self.net.fc = nn.Linear(in_features, out_features + n, bias = False)
+        self.feature_extractor.weight.data[:out_features] = weight
         self.n_classes += n
 
   # computes the means of each exemplar set
@@ -111,7 +105,7 @@ class ICaRL(nn.Module):
     torch.cuda.empty_cache()
 
     exemplar_means = []
-    feature_extractor = self.fc.to(self.DEVICE)
+    feature_extractor = self.feature_extractor.to(self.DEVICE)
     feature_extractor.train(False)
 
     with torch.no_grad():
@@ -150,7 +144,7 @@ class ICaRL(nn.Module):
       torch.cuda.empty_cache()
 
       batch_imgs_size = batch_imgs.size(0)
-      feature_extractor = self.fc.to(self.DEVICE)
+      feature_extractor = self.feature_extractor.to(self.DEVICE)
       feature_extractor.train(False)
 
       means_exemplars = torch.cat(self.exemplar_means, dim=0)
@@ -186,7 +180,7 @@ class ICaRL(nn.Module):
     torch.cuda.empty_cache()
     gc.collect()
 
-    feature_extractor = self.fc.to(self.DEVICE)
+    feature_extractor = self.feature_extractor.to(self.DEVICE)
     feature_extractor.train(False)
 
     """Construct an exemplar set for image set
@@ -221,7 +215,7 @@ class ICaRL(nn.Module):
         i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
         exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)
         
-        exemplar_set.append(exemplar_k)
+        exemplar_set.append((exemplar_k, label))
 
         # test features of the exemplar
         phi = feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
@@ -238,12 +232,12 @@ class ICaRL(nn.Module):
     index = 0
     aus_dataset = []
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
-        for exemplar in exemplar_set:
+        for exemplar, label in exemplar_set:
             exemplar = exemplar.squeeze()
             #print(exemplar.size())
             img = ToPILImage()(exemplar)
             #exemplar = Image.fromarray(np.array(exemplar)) # Return a PIL image
-            aus_dataset.append((img, index)) # nb i do not append the label yet a simple index, 0 is just a placeholder
+            aus_dataset.append((img, label)) # nb i do not append the label yet a simple index, 0 is just a placeholder
         index += 1
 
     return aus_dataset 
@@ -313,15 +307,8 @@ class ICaRL(nn.Module):
             if self.n_known > 0:
               print(outputs.size())
 
-            #labels_one_hot = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
-            #labels_one_hot = labels_one_hot.type_as(outputs)
-            # just a test
-            labels_one_hot = nn.functional.one_hot(labels,100).type_as(outputs)
-
-
-            # test
-            #labels_one_hot = nn.functional.one_hot(labels, self.n_classes)
-            # Classification loss for new classes
+            labels_one_hot = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
+            labels_one_hot = labels_one_hot.type_as(outputs)
 
             # Loss = only classification on new classes
             if len(self.exemplar_sets) == 0:
@@ -343,8 +330,8 @@ class ICaRL(nn.Module):
         print("LOSS: ",loss)
 
     self.net = copy.deepcopy(net)
-    self.fc = copy.deepcopy(net)
-    self.fc.linear = nn.Sequential()
+    self.feature_extractor = copy.deepcopy(net)
+    self.feature_extractor.fc = nn.Sequential()
     del net
     #gc.collect()
     #
@@ -375,10 +362,6 @@ class ConcatDataset(Dataset):
         self.transform = transform
         self.l1 = len(dataset1)
         self.l2 = len(dataset2)
-
-        #print(dataset1[0])
-        #if self.l2 > 0:
-        #  print(dataset2[0])
 
     def __getitem__(self,index):
         if index < self.l1:
