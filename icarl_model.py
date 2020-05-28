@@ -111,7 +111,7 @@ class ICaRL(nn.Module):
     with torch.no_grad():
       for exemplar_set in self.exemplar_sets:
         features=[]
-        for exemplar in exemplar_set:
+        for exemplar, label in exemplar_set:
           exemplar = exemplar.to(self.DEVICE)
           feature = feature_extractor(exemplar)
           features.append(feature)
@@ -302,7 +302,6 @@ class ICaRL(nn.Module):
             optimizer.zero_grad() # Zero-ing the gradients
 
             # Forward pass to the network
-            print(images)
             outputs = net(images)
             if self.n_known > 0:
               print(outputs.size())
