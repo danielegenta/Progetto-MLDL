@@ -87,10 +87,12 @@ class ICaRL(nn.Module):
 
         in_features = self.net.fc.in_features
         out_features = self.net.fc.out_features
-        #weights = self.net.fc.weight.data
+        weights = self.net.fc.weight.data
+        bias = self.net.fc.bias.data
 
-        self.net.fc = nn.Linear(in_features, out_features + n, bias = False) #add 10 classes to the fc last layer
-        #self.net.fc.weight.data[:out_features] = weights
+        self.net.fc = nn.Linear(in_features, out_features + n) #add 10 classes to the fc last layer
+        self.net.fc.weight.data[:out_features] = weights
+        self.net.fc.bias.data[:out_features] = bias
         self.n_classes += n #icrement #classes considered
 
   # computes the mean of each exemplar set
@@ -189,7 +191,7 @@ class ICaRL(nn.Module):
     # Compute and cache features for each example
     features = []
 
-    loader = DataLoader(tensors,batch_size=self.BATCH_SIZE,shuffle=False,drop_last=False,num_workers = 4)
+    loader = DataLoader(tensors,batch_size=self.BATCH_SIZE,shuffle=True,drop_last=False,num_workers = 4)
 
     with torch.no_grad():
       for _, images, labels in loader:
@@ -284,7 +286,7 @@ class ICaRL(nn.Module):
     net = net.to(self.DEVICE)
 
     # define the loader for the augmented_dataset
-    loader = DataLoader(augmented_dataset, batch_size=self.BATCH_SIZE,shuffle=False, num_workers=4, drop_last = True)
+    loader = DataLoader(augmented_dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
 
     if len(self.exemplar_sets) > 0:
       old_net = copy.deepcopy(net) 
