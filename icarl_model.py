@@ -240,7 +240,7 @@ class ICaRL(nn.Module):
     aus_dataset = []
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
         for exemplar, label in exemplar_set:
-            img = Image.fromarray(exemplar.squeeze().cpu().numpy(), mode = 'RGB') # Return a PIL image
+            img = Image.fromarray(np.array(exemplar.cpu().squeeze()), mode = 'RGB') # Return a PIL image
             aus_dataset.append((img, label))
     return aus_dataset 
 
