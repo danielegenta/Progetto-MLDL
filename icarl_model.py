@@ -236,7 +236,7 @@ class ICaRL(nn.Module):
             #exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
             #print(exemplar.size())
             #img = ToPILImage()(exemplar)
-            img = Image.fromarray(np.array(exemplar)) # Return a PIL image
+            img = Image.fromarray(np.array(exemplar.squeeze())) # Return a PIL image
             aus_dataset.append((img, label)) # nb i do not append the label yet a simple index, 0 is just a placeholder
 
     return aus_dataset 
