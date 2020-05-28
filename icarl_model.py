@@ -237,10 +237,12 @@ class ICaRL(nn.Module):
 
 
   def augment_dataset_with_exemplars(self, dataset):
+    transformToImg = transforms.ToPILImage()
     aus_dataset = []
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
         for exemplar, label in exemplar_set:
-            img = Image.fromarray(np.array(exemplar.cpu().squeeze()), mode = 'RGB') # Return a PIL image
+            #img = Image.fromarray(np.array(exemplar.cpu().squeeze()), mode = 'RGB') # Return a PIL image
+            img = transformToImg(exemplar.squeeze()).convert("RGB")
             aus_dataset.append((img, label))
     return aus_dataset 
 
