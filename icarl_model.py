@@ -345,8 +345,9 @@ class ICaRL(nn.Module):
     self.net = copy.deepcopy(net)
     self.fc = copy.deepcopy(net)
     self.fc.linear = nn.Sequential()
+    del net
     #gc.collect()
-    #del net
+    #
     #torch.no_grad()
     #torch.cuda.empty_cache()
 
