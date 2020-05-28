@@ -19,10 +19,10 @@ import numpy as np
 # These are the default iCaRL hyper-parameters
 def getHyperparams():
 	dictHyperparams = {
-		"LR": 70,
+		"LR": 2,
 		"MOMENTUM": 0.9,
 		"WEIGHT_DECAY": 1e-5,
-		"NUM_EPOCHS": 1,
+		"NUM_EPOCHS": 70,
 		"MILESTONES": [49, 63],
 		"BATCH_SIZE": 128,
 		"DEVICE": 'cuda',
