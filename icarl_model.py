@@ -87,10 +87,10 @@ class ICaRL(nn.Module):
 
         in_features = self.net.fc.in_features
         out_features = self.net.fc.out_features
-        weights = self.net.fc.weight.data
+        #weights = self.net.fc.weight.data
 
         self.net.fc = nn.Linear(in_features, out_features + n, bias = False) #add 10 classes to the fc last layer
-        self.net.fc.weight.data[:out_features] = weights
+        #self.net.fc.weight.data[:out_features] = weights
         self.n_classes += n #icrement #classes considered
 
   # computes the mean of each exemplar set
