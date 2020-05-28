@@ -25,7 +25,7 @@ from Cifar100.Dataset.cifar100 import CIFAR100
 import copy
 import gc
 from torchvision import transforms
-
+from PIL import Image
 
 from Cifar100 import utils
 
@@ -242,7 +242,7 @@ class ICaRL(nn.Module):
     print(len(self.exemplar_sets))
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
         for exemplar in exemplar_set:
-            #exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
+            exemplar = Image.fromarray(exemplar) # Return a PIL image
             aus_dataset.append((exemplar.squeeze(), index)) # nb i do not append the label yet a simple index, 0 is just a placeholder
         index += 1
 
@@ -313,9 +313,6 @@ class ICaRL(nn.Module):
 
             # Forward pass to the network
             outputs = net(images)
-            if self.n_known == 0:
-              print(images)
-            break
             #print(outputs.size())
 
             labels_one_hot = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
@@ -384,7 +381,7 @@ class ConcatDataset(Dataset):
             return image,label
         else:
             image, label = self.dataset2[index - self.l1]
-            #image = self.transform(image)
+            image = self.transform(image)
             return image,label
 
     def __len__(self):
