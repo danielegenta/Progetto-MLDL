@@ -269,8 +269,7 @@ class ICaRL(nn.Module):
     exemplars_dataset = self.augment_dataset_with_exemplars(dataset)
     augmented_dataset = ConcatDataset(dataset, exemplars_dataset, self.transform)
 
-    # [debug]
-    print(self.exemplars_sets)
+
     
     # 6 - run network training, with loss function
 
@@ -291,6 +290,8 @@ class ICaRL(nn.Module):
 
     if len(self.exemplar_sets) > 0:
       old_net = copy.deepcopy(net) 
+      # [debug]
+      print(self.exemplar_sets)
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
         for images, labels in loader:
