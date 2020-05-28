@@ -211,7 +211,6 @@ class ICaRL(nn.Module):
     #class_mean = class_mean / np.linalg.norm(class_mean.cpu()) # Normalize
 
     class_mean = torch.stack([class_mean]*features_s.size()[0])
-    torch.cuda.empty_cache()
 
     exemplar_set = []
     exemplar_features = [] # list of Variables of shape (feature_size,)
@@ -228,10 +227,10 @@ class ICaRL(nn.Module):
         summon += phi # update sum of features
         del exemplar_k 
 
+    self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
+
     # cleaning
     torch.cuda.empty_cache()
-
-    self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
 
   # creation of an auxiliary dataset (actually a simple list) that will be concatenated
   # to the train_subset
@@ -261,7 +260,7 @@ class ICaRL(nn.Module):
     # 3 - increment classes
     #          (add output nodes)
     #          (update n_classes)
-
+    # 5        store network outputs with pre-update parameters
     self.increment_classes(len(new_classes))
 
     # 4 - combine current train_subset (dataset) with exemplars
@@ -271,8 +270,7 @@ class ICaRL(nn.Module):
 
     # join the datasets
 
-    self.cuda()
-    # 5 - store network outputs with pre-update parameters => q
+    
     # 6 - run network training, with loss function
 
     net = self.net
