@@ -192,15 +192,16 @@ class ICaRL(nn.Module):
 
     loader = DataLoader(tensors,batch_size=self.BATCH_SIZE,shuffle=True,drop_last=False,num_workers = 4)
 
-    for _, images, labels in loader:
-      images = images.to(self.DEVICE)
-      labels = labels.to(self.DEVICE)
-      feature = feature_extractor(images) 
+    with torch.no_grad():
+      for _, images, labels in loader:
+        images = images.to(self.DEVICE)
+        labels = labels.to(self.DEVICE)
+        feature = feature_extractor(images) 
 
-      # is this line important? it yields an error
-      #feature = feature / np.linalg.norm(feature) # Normalize
-
-      features.append(feature)
+        # ---new
+        feature = feature / np.linalg.norm(feature) # Normalize
+        
+        features.append(feature)
 
     features_s = torch.cat(features)
     class_mean = features_s.mean(0)
@@ -228,17 +229,11 @@ class ICaRL(nn.Module):
 
 
   def augment_dataset_with_exemplars(self, dataset):
-    #transformToImg = transforms.ToPILImage()
     aus_dataset = []
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
         for exemplar, label in exemplar_set:
-            #exemplar = exemplar.squeeze()
-            #exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
-            #print(exemplar.size())
-            #img = ToPILImage()(exemplar)
-            img = Image.fromarray(np.array(exemplar), mode = 'RGB') # Return a PIL image
-            aus_dataset.append((img, label)) # nb i do not append the label yet a simple index, 0 is just a placeholder
-
+            img = Image.fromarray(np.array(exemplar.squeeze()), mode = 'RGB') # Return a PIL image
+            aus_dataset.append((img, label))
     return aus_dataset 
 
   def _one_hot_encode(self, labels, dtype=None, device=None):
@@ -267,7 +262,7 @@ class ICaRL(nn.Module):
 
     # join the datasets
 
-    #self.cuda()
+    self.cuda()
     # 5 - store network outputs with pre-update parameters => q
     # 6 - run network training, with loss function
 
@@ -302,8 +297,6 @@ class ICaRL(nn.Module):
 
             # Forward pass to the network
             outputs = net(images)
-            # if self.n_known > 0:
-            #   print(outputs.size())
 
             labels_one_hot = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
             labels_one_hot = labels_one_hot.type_as(outputs)
@@ -331,10 +324,8 @@ class ICaRL(nn.Module):
     self.feature_extractor = copy.deepcopy(net)
     self.feature_extractor.fc = nn.Sequential()
     del net
-    #gc.collect()
-    #
-    #torch.no_grad()
-    #torch.cuda.empty_cache()
+    torch.no_grad()
+    torch.cuda.empty_cache()
 
 
   # implementation of alg. 5 of icarl paper
