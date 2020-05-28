@@ -291,7 +291,7 @@ class ICaRL(nn.Module):
     if len(self.exemplar_sets) > 0:
       old_net = copy.deepcopy(net) 
       # [debug]
-      print(self.exemplar_sets)
+      print(len(self.exemplar_sets))
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
         for images, labels in loader:
