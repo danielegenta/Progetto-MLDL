@@ -374,7 +374,8 @@ class ConcatDataset(Dataset):
         self.l2 = len(dataset2)
 
         print(dataset1[0])
-        print(dataset2[0])
+        if self.l2 > 0
+          print(dataset2[0])
 
     def __getitem__(self,index):
         if index < self.l1:
