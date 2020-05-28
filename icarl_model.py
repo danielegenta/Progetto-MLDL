@@ -189,7 +189,7 @@ class ICaRL(nn.Module):
     # Compute and cache features for each example
     features = []
 
-    loader = DataLoader(tensors,batch_size=self.BATCH_SIZE,shuffle=True,drop_last=False,num_workers = 4)
+    loader = DataLoader(tensors,batch_size=self.BATCH_SIZE,shuffle=False,drop_last=False,num_workers = 4)
 
     with torch.no_grad():
       for _, images, labels in loader:
@@ -284,7 +284,7 @@ class ICaRL(nn.Module):
     net = net.to(self.DEVICE)
 
     # define the loader for the augmented_dataset
-    loader = DataLoader(augmented_dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
+    loader = DataLoader(augmented_dataset, batch_size=self.BATCH_SIZE,shuffle=False, num_workers=4, drop_last = True)
 
     if len(self.exemplar_sets) > 0:
       old_net = copy.deepcopy(net) 
@@ -341,8 +341,6 @@ class ICaRL(nn.Module):
             # where m is the UPDATED K/number_classes_seen
             # the number of images per each exemplar set (class) progressively decreases
             self.exemplar_sets[y] = P_y[:m] 
-
-
 
 
 # ----------
