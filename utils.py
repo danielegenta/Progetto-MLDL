@@ -27,7 +27,7 @@ def getHyperparams():
 		"BATCH_SIZE": 128,
 		"DEVICE": 'cuda',
 		"GAMMA": 0.2,
-		"SEED": 30, #use 30, 42, 16
+		"SEED": 42, #use 30, 42, 16
 		"LOG_FREQUENCY": 10,
 		"NUM_CLASSES": 100
 	}
