@@ -40,7 +40,7 @@ class ICaRL(nn.Module):
   def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM,K, transform, reverse_index = None):
     super(ICaRL, self).__init__()
     self.net = resnet32()
-    self.net.linear = nn.Linear(self.net.linear.in_features, 100)
+    self.net.linear = nn.Linear(feature_size, 100)
     
     #self.bn = nn.BatchNorm1d(feature_size, momentum=MOMENTUM)
     #self.ReLU = nn.ReLU()
