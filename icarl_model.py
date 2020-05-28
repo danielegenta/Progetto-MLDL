@@ -243,7 +243,7 @@ class ICaRL(nn.Module):
     print(len(self.exemplar_sets))
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
         for exemplar in exemplar_set:
-            #exemplar = exemplar.squeeze()
+            exemplar = exemplar.squeeze()
             #print(exemplar.size())
             img = ToPILImage()(exemplar)
             #exemplar = Image.fromarray(np.array(exemplar)) # Return a PIL image
