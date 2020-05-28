@@ -383,7 +383,7 @@ class ConcatDataset(Dataset):
             return image,label
         else:
             image, label = self.dataset2[index - self.l1]
-            image = self.transform(image)
+            #image = self.transform(image)
             return image,label
 
     def __len__(self):
