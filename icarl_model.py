@@ -270,7 +270,7 @@ class ICaRL(nn.Module):
     augmented_dataset = ConcatDataset(dataset, exemplars_dataset, self.transform)
 
     # [debug]
-    print(self.exemplars_dataset)
+    print(self.exemplars_sets)
     
     # 6 - run network training, with loss function
 
