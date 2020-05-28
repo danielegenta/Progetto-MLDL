@@ -240,7 +240,6 @@ class ICaRL(nn.Module):
     transformToImg = transforms.ToPILImage()
     index = 0
     aus_dataset = []
-    print(len(self.exemplar_sets))
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
         for exemplar in exemplar_set:
             exemplar = exemplar.squeeze()
@@ -258,7 +257,6 @@ class ICaRL(nn.Module):
       enconded[i, l] = 1
     return enconded
 
-  # just a start to make the test work
   def update_representation(self, dataset, new_classes):
     #print(new_classes)
     # 1 - retrieve the classes from the dataset (which is the current train_subset)
@@ -344,6 +342,9 @@ class ICaRL(nn.Module):
         scheduler.step()
         print("LOSS: ",loss)
 
+    self.feature_extractor = copy.deepcopy(net)
+    self.fc = copy.deepcopy(net)
+    self.fc.linear = nn.Sequential()
     #gc.collect()
     #del net
     #torch.no_grad()
