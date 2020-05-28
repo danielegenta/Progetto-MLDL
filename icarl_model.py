@@ -275,9 +275,6 @@ class ICaRL(nn.Module):
 
     # join the datasets
 
-    # define the loader for the augmented_dataset
-    loader = DataLoader(augmented_dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
-
     #self.cuda()
     # 5 - store network outputs with pre-update parameters => q
     # 6 - run network training, with loss function
@@ -293,6 +290,9 @@ class ICaRL(nn.Module):
 
     cudnn.benchmark # Calling this optimizes runtime
     net = net.to(self.DEVICE)
+
+    # define the loader for the augmented_dataset
+    loader = DataLoader(augmented_dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
 
     if len(self.exemplar_sets) > 0:
       old_net = copy.deepcopy(net) 
