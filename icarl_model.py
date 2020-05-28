@@ -93,7 +93,7 @@ class ICaRL(nn.Module):
         """Add n classes in the final fc layer"""
         in_features = self.net.fc.in_features
         out_features = self.net.fc.out_features
-        weight = self.net.fc.weight.data
+        weight = self.feature_extractor.weight.data
 
         self.net.fc = nn.Linear(in_features, out_features + n, bias = False)
         self.feature_extractor.weight.data[:out_features] = weight
