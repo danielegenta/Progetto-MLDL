@@ -39,8 +39,8 @@ from Cifar100 import utils
 class ICaRL(nn.Module):
   def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM,K, transform, reverse_index = None):
     super(ICaRL, self).__init__()
-    self.feature_extractor = resnet32()
-    self.feature_extractor.linear = nn.Linear(self.feature_extractor.fc.in_features, 100)
+    self.net = resnet32()
+    self.net.linear = nn.Linear(self.net.linear.in_features, 100)
     
     #self.bn = nn.BatchNorm1d(feature_size, momentum=MOMENTUM)
     #self.ReLU = nn.ReLU()
@@ -96,11 +96,11 @@ class ICaRL(nn.Module):
         gc.collect()
 
         """Add n classes in the final fc layer"""
-        in_features = self.feature_extractor.linear.in_features
-        out_features = self.feature_extractor.linear.out_features
-        #weight = self.feature_extractor.linear.weight.data
+        in_features = self.net.linear.in_features
+        out_features = self.net.linear.out_features
+        #weight = self.net.linear.weight.data
 
-        self.feature_extractor.linear = nn.Linear(in_features, out_features + n, bias = False)
+        self.net.linear = nn.Linear(in_features, out_features + n, bias = False)
         
         #self.fc.weight.data[:out_features] = weight
         self.n_classes += n
@@ -221,13 +221,10 @@ class ICaRL(nn.Module):
         i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
         exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)
         
-        #label
-        #label_k = tensors[i.item()][2].unsqueeze(dim = 0) 
         exemplar_set.append(exemplar_k)
 
         # test features of the exemplar
         phi = feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
-        
         summon += phi # update sum of features
         del exemplar_k 
 
@@ -285,7 +282,7 @@ class ICaRL(nn.Module):
     # 5 - store network outputs with pre-update parameters => q
     # 6 - run network training, with loss function
 
-    net = self.feature_extractor
+    net = self.net
 
     optimizer = optim.SGD(net.parameters(), lr=self.LR, weight_decay=self.WEIGHT_DECAY, momentum=self.MOMENTUM)
 
@@ -345,7 +342,7 @@ class ICaRL(nn.Module):
         scheduler.step()
         print("LOSS: ",loss)
 
-    self.feature_extractor = copy.deepcopy(net)
+    self.net = copy.deepcopy(net)
     self.fc = copy.deepcopy(net)
     self.fc.linear = nn.Sequential()
     #gc.collect()
