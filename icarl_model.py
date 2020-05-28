@@ -40,7 +40,7 @@ class ICaRL(nn.Module):
   def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM,K, transform, reverse_index = None):
     super(ICaRL, self).__init__()
     self.net = resnet32()
-    self.net.fc = nn.Linear(feature_size, n_classes)
+    self.net.fc = nn.Linear(self.net.fc.in_features, n_classes)
 
     self.feature_extractor = resnet32()
     self.feature_extractor.fc = nn.Sequential()
