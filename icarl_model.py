@@ -303,6 +303,7 @@ class ICaRL(nn.Module):
             optimizer.zero_grad() # Zero-ing the gradients
 
             # Forward pass to the network
+            print(images)
             outputs = net(images)
             if self.n_known > 0:
               print(outputs.size())
