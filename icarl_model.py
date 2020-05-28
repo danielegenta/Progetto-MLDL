@@ -313,9 +313,9 @@ class ICaRL(nn.Module):
 
             # Forward pass to the network
             outputs = net(images)
-            if n_known > 0:
+            if self.n_known > 0:
               outputs = old_net(images)
-              
+
             print(outputs.size())
 
             labels_one_hot = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
@@ -374,9 +374,9 @@ class ConcatDataset(Dataset):
         self.l1 = len(dataset1)
         self.l2 = len(dataset2)
 
-        print(dataset1[0])
-        if self.l2 > 0:
-          print(dataset2[0])
+        #print(dataset1[0])
+        #if self.l2 > 0:
+        #  print(dataset2[0])
 
     def __getitem__(self,index):
         if index < self.l1:
