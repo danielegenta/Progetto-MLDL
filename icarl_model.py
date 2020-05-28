@@ -233,7 +233,7 @@ class ICaRL(nn.Module):
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
         for exemplar, label in exemplar_set:
             #exemplar = exemplar.squeeze()
-            exemplar = trans(exemplar.squeeze()).convert("RGB")
+            exemplar = transformToImg(exemplar.squeeze()).convert("RGB")
             #print(exemplar.size())
             #img = ToPILImage()(exemplar)
             #exemplar = Image.fromarray(np.array(exemplar)) # Return a PIL image
