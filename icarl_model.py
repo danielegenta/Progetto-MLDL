@@ -312,10 +312,9 @@ class ICaRL(nn.Module):
             optimizer.zero_grad() # Zero-ing the gradients
 
             # Forward pass to the network
-            outputs = net(images)
+            outputs = old_net(images)
 
             print(outputs.size())
-            print(labels)
 
             labels_one_hot = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
             labels_one_hot.type_as(outputs)
