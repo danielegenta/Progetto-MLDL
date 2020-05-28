@@ -211,7 +211,7 @@ class ICaRL(nn.Module):
     class_mean = features_s.mean(0)
 
     # --- new
-    class_mean = class_mean / np.linalg.norm(class_mean) # Normalize
+    class_mean = class_mean / np.linalg.norm(class_mean.cpu()) # Normalize
 
     class_mean = torch.stack([class_mean]*features_s.size()[0])
     torch.cuda.empty_cache()
