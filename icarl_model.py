@@ -247,9 +247,9 @@ class ICaRL(nn.Module):
     else:
       tensors_size = len(tensors)
       for k in range(1, (m + 1)):
-      i = random.randint(0,tensors_size) # this way the same exemplar may be selected multiple times
-      exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)     
-      exemplar_set.append((exemplar_k, label))
+        i = random.randint(0,tensors_size) # this way the same exemplar may be selected multiple times
+        exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)     
+        exemplar_set.append((exemplar_k, label))
     
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
     self.exemplar_sets_indices.append(exemplar_set)
