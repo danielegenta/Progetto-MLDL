@@ -247,7 +247,7 @@ class ICaRL(nn.Module):
           summon += phi # update sum of features
     else:
       tensors_size = len(tensors)
-      unique_random_indexes = random.sample(range(0, tensors_size), k) # random sample without replacement k exemplars
+      unique_random_indexes = random.sample(range(0, tensors_size), m) # random sample without replacement k exemplars
       i = 0
       for k in range(1, (m + 1)):
         index = unique_random_indexes[i]
