@@ -211,14 +211,14 @@ class ICaRL(nn.Module):
           labels = labels.to(self.DEVICE)
           feature = feature_extractor(images) 
 
-          #feature = feature / np.linalg.norm(feature.cpu()) # Normalize
+          feature = feature / np.linalg.norm(feature.cpu()) # Normalize
           
           features.append(feature)
 
       features_s = torch.cat(features)
       class_mean = features_s.mean(0)
 
-      #class_mean = class_mean / np.linalg.norm(class_mean.cpu()) # Normalize
+      class_mean = class_mean / np.linalg.norm(class_mean.cpu()) # Normalize
 
       class_mean = torch.stack([class_mean]*features_s.size()[0])
 
@@ -231,7 +231,7 @@ class ICaRL(nn.Module):
       summon = torch.zeros(1,features_s.size()[1]).to(self.DEVICE) #(1,num_features)
       for k in range(1, (m + 1)):
           S = torch.cat([summon]*features_s.size()[0]) # second addend, features in the exemplar set
-          results = pd.DataFrame((class_mean-(1/k)*(features_s + S)).pow(2).sum(1).cpu().detach().numpy(), columns=['result']).sort_values('result')
+          results = pd.DataFrame((class_mean-(1/k)*(features_s + S)).pow(2).sum(1), columns=['result']).sort_values('result')
           results['index'] = results.index
           results = results.to_numpy()
 
