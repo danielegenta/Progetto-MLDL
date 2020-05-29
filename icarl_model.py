@@ -253,8 +253,6 @@ class ICaRL(nn.Module):
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
     self.exemplar_sets_indices.append(exemplar_set_indices)
 
-    print(self.exemplar_sets_indices)
-
     # cleaning
     torch.cuda.empty_cache()
 
@@ -314,7 +312,7 @@ class ICaRL(nn.Module):
     else: 
       augmented_dataset = dataset # first iteration
 
-    print(len(augmented_dataset))
+    print(len(train_dataset_big))
 
     # 6 - run network training, with loss function
 
