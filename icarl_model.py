@@ -278,13 +278,8 @@ class ICaRL(nn.Module):
   # -- this is not used anymore --
   # creation of an auxiliary dataset (actually a simple list) that will be concatenated
   # to the train_subset
+  """
   def augment_dataset_with_exemplars_old(self, dataset):
-    """
-      Args:
-          dataset: @TOREMOVE not used
-      return:
-          auxiliary dataset of exemplars (image format)
-    """
     transformToImg = transforms.ToPILImage()
     aus_dataset = []
     for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
@@ -293,6 +288,7 @@ class ICaRL(nn.Module):
             img = transformToImg(exemplar.squeeze()).convert("RGB")
             aus_dataset.append((img, label))
     return aus_dataset 
+  """
 
   def build_exemplars_dataset(self, train_dataset): #complete train dataset (seen so far)
     all_exemplars_indices = []
