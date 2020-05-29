@@ -138,7 +138,7 @@ class ICaRL(nn.Module):
   # classification via fc layer (similar to lwf approach)
   def FCC_classify(self, batch_imgs):
 	  _, preds = torch.max(torch.softmax(self.net(images), dim=1), dim=1, keepdim=False)
-    return preds    
+    return preds
 
   # NME classification from iCaRL paper
   def classify(self, batch_imgs):
