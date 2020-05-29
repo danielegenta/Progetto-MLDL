@@ -337,7 +337,7 @@ class ICaRL(nn.Module):
       old_net = copy.deepcopy(net) 
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
-        for images, labels in loader:
+        for _, images, labels in loader:
             # Bring data over the device of choice
             images = images.to(self.DEVICE)
             labels = labels.to(self.DEVICE)
