@@ -278,6 +278,7 @@ class ICaRL(nn.Module):
   def augment_dataset_with_exemplars(self, train_dataset): #complete train dataset (seen so far)
 
     print(self.exemplar_sets_indices)
+    print(self.exemplar_sets)
 
     all_exemplars_indices = []
     for exemplar_set_indices in self.exemplar_sets_indices:
@@ -383,7 +384,11 @@ class ICaRL(nn.Module):
             # where m is the UPDATED K/number_classes_seen
             # the number of images per each exemplar set (class) progressively decreases
             self.exemplar_sets[y] = P_y[:m] 
-
+        for x, P_x in enumerate(self.exemplar_sets_indices):
+            # i keep only the first m exemplar images
+            # where m is the UPDATED K/number_classes_seen
+            # the number of images per each exemplar set (class) progressively decreases
+            self.exemplar_sets_indices[x] = P_x[:m] 
 
   def joinSubsets(self, dataset, subsets):
     indices = []
