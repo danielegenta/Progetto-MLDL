@@ -283,8 +283,6 @@ class ICaRL(nn.Module):
     exemplars_dataset = Subset(train_dataset, all_exemplars_indices)
     return exemplars_dataset
 
-
-
   def update_representation(self, dataset, train_dataset_big, new_classes):
     #print(new_classes)
     # 1 - retrieve the classes from the dataset (which is the current train_subset)
@@ -304,7 +302,7 @@ class ICaRL(nn.Module):
     exemplars_dataset = self.augment_dataset_with_exemplars(train_dataset_big)
     #augmented_dataset = ConcatDataset(dataset, exemplars_dataset, self.transform)
     if len(exemplars_dataset) > 0:
-      augmented_dataset = self.joinSubsets(train_dataset_big [dataset, exemplars_dataset])
+      augmented_dataset = self.joinSubsets(train_dataset_big, [dataset, exemplars_dataset])
     else: 
       augmented_dataset = dataset # first iteration
 
