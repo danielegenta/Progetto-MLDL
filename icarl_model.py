@@ -245,7 +245,7 @@ class ICaRL(nn.Module):
               exemplar_set.append((exemplar_k, label))
               exemplar_k_index = tensors[index][0] # index of the img on the real dataset
               
-              exemplar_list_indices.add(exemplar_k_index)
+              exemplar_list_indices.append(exemplar_k_index)
               exemplar_set_indices.add(exemplar_k_index)
               break
 
@@ -262,7 +262,6 @@ class ICaRL(nn.Module):
           # features of the exemplar k
           phi = feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
           summon += phi # update sum of features
-      #exemplar_set_indices = list(exemplar_set_indices) => useless
     else:
       tensors_size = len(tensors)
       for k in range(1, (m + 1)):
