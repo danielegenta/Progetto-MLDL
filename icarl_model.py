@@ -244,6 +244,7 @@ class ICaRL(nn.Module):
               exemplar_set.append((exemplar_k, label))
               exemplar_k_index = tensors[index][0] # index of the img on the real dataset
               exemplar_set_indices.add(exemplar_k_index)
+              break
 
 
           # i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
