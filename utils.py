@@ -15,6 +15,7 @@ import json
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from torch.utils.data import Subset, DataLoader
 
 # These are the default iCaRL hyper-parameters
 def getHyperparams():
@@ -27,7 +28,7 @@ def getHyperparams():
 		"BATCH_SIZE": 128,
 		"DEVICE": 'cuda',
 		"GAMMA": 0.2,
-		"SEED": 30, #use 30, 42, 16
+		"SEED": 42, #use 30, 42, 16
 		"LOG_FREQUENCY": 10,
 		"NUM_CLASSES": 100
 	}
@@ -130,5 +131,11 @@ def writeMetrics(method, seed, accuracies, confusionMatrixData):
   filename = 'data_{}.json'.format(aus)
   with open(filename, 'w') as f:
     json.dump(data, f)
+
+def joinSubsets(dataset, subsets):
+    indices = []
+    for s in subsets:
+        indices += s.indices
+    return Subset(dataset, indices)
 
 
