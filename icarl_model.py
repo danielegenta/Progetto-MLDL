@@ -278,7 +278,6 @@ class ICaRL(nn.Module):
     return aus_dataset 
 
   def augment_dataset_with_exemplars(self, train_dataset): #complete train dataset (seen so far)
-    print("OKOKOK")
     all_exemplars_indices = []
     for exemplar_set_indices in self.exemplar_sets_indices:
         all_exemplars_indices.extend(exemplar_set_indices)
@@ -286,7 +285,7 @@ class ICaRL(nn.Module):
     exemplars_dataset = Subset(train_dataset, all_exemplars_indices)
 
     # [DEBUG]
-    print(exemplars_dataset)
+    print(len(exemplars_dataset))
     
     return exemplars_dataset
 
@@ -309,7 +308,10 @@ class ICaRL(nn.Module):
     #     to form a new augmented train dataset
     # join the datasets
     exemplars_dataset = self.augment_dataset_with_exemplars(train_dataset_big)
-    augmented_dataset = ConcatDataset(dataset, exemplars_dataset, self.transform)
+    #augmented_dataset = ConcatDataset(dataset, exemplars_dataset, self.transform)
+    augmented_dataset = joinSubsets(train_dataset_big, exemplars_dataset)
+
+    print(len(augmented_dataset))
 
     # 6 - run network training, with loss function
 
@@ -384,6 +386,15 @@ class ICaRL(nn.Module):
             # the number of images per each exemplar set (class) progressively decreases
             self.exemplar_sets[y] = P_y[:m] 
 
+
+  def joinSubsets(self, dataset, subsets):
+    indices = []
+    if len(subsets) > 0
+      for s in subsets:
+          indices += s.indices
+      return Subset(dataset, indices)
+    else 
+      return subsets
 
 # ----------
 
