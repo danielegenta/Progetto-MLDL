@@ -393,7 +393,7 @@ class ICaRL(nn.Module):
       for s in subsets:
           indices += s.indices
       return Subset(dataset, indices)
-    else 
+    else:
       return subsets
 
 # ----------
