@@ -276,15 +276,14 @@ class ICaRL(nn.Module):
     return aus_dataset 
 
   def augment_dataset_with_exemplars(self, train_dataset): #complete train dataset (seen so far)
+
+    print(self.exemplar_sets_indices)
+
     all_exemplars_indices = []
     for exemplar_set_indices in self.exemplar_sets_indices:
         all_exemplars_indices.extend(exemplar_set_indices)
 
     exemplars_dataset = Subset(train_dataset, all_exemplars_indices)
-
-    # [DEBUG]
-    print(len(exemplars_dataset))
-    
     return exemplars_dataset
 
 
@@ -311,8 +310,6 @@ class ICaRL(nn.Module):
       augmented_dataset = self.joinSubsets(train_dataset_big, exemplars_dataset)
     else: 
       augmented_dataset = dataset # first iteration
-
-    print(len(train_dataset_big))
 
     # 6 - run network training, with loss function
 
