@@ -29,6 +29,8 @@ from Cifar100 import utils
 from Cifar100.resnet import resnet32
 from Cifar100.Dataset.cifar100 import CIFAR100
 
+import random
+
 
 # feature_size: 2048, why?
 # n_classes: 10 => 100
@@ -79,6 +81,8 @@ class ICaRL(nn.Module):
     # Means of exemplars (cntroids)
     self.compute_means = True
     self.exemplar_means = []
+
+    self.herding = True # random choice of exemplars or icarl exemplars strategy?
   
   # increment the number of classes considered by the net
   # incremental learning approach, 0,10..100
@@ -130,6 +134,12 @@ class ICaRL(nn.Module):
         torch.cuda.empty_cache()
 
     self.exemplar_means = exemplar_means
+
+  # classification via fc layer (similar to lwf approach)
+  def FCC_classify(self, batch_imgs):
+	
+	_, preds = torch.max(torch.softmax(self.net(images), dim=1), dim=1, keepdim=False)
+    return preds    
 
   # NME classification from iCaRL paper
   def classify(self, batch_imgs):
@@ -187,48 +197,58 @@ class ICaRL(nn.Module):
     torch.cuda.empty_cache()
     gc.collect()
 
-    feature_extractor = self.feature_extractor.to(self.DEVICE)
-    feature_extractor.train(False)
+    if self.herding: 
 
-    # Compute and cache features for each example
-    features = []
+	    feature_extractor = self.feature_extractor.to(self.DEVICE)
+	    feature_extractor.train(False)
 
-    loader = DataLoader(tensors,batch_size=self.BATCH_SIZE,shuffle=True,drop_last=False,num_workers = 4)
+	    # Compute and cache features for each example
+	    features = []
 
-    with torch.no_grad():
-      for _, images, labels in loader:
-        images = images.to(self.DEVICE)
-        labels = labels.to(self.DEVICE)
-        feature = feature_extractor(images) 
+	    loader = DataLoader(tensors,batch_size=self.BATCH_SIZE,shuffle=True,drop_last=False,num_workers = 4)
 
-        #feature = feature / np.linalg.norm(feature.cpu()) # Normalize
-        
-        features.append(feature)
+	    with torch.no_grad():
+	      for _, images, labels in loader:
+	        images = images.to(self.DEVICE)
+	        labels = labels.to(self.DEVICE)
+	        feature = feature_extractor(images) 
 
-    features_s = torch.cat(features)
-    class_mean = features_s.mean(0)
+	        #feature = feature / np.linalg.norm(feature.cpu()) # Normalize
+	        
+	        features.append(feature)
 
-    #class_mean = class_mean / np.linalg.norm(class_mean.cpu()) # Normalize
+	    features_s = torch.cat(features)
+	    class_mean = features_s.mean(0)
 
-    class_mean = torch.stack([class_mean]*features_s.size()[0])
+	    #class_mean = class_mean / np.linalg.norm(class_mean.cpu()) # Normalize
 
-    exemplar_set = []
-    exemplar_features = [] # list of Variables of shape (feature_size,)
-    summon = torch.zeros(1,features_s.size()[1]).to(self.DEVICE) #(1,num_features)
-    for k in range(1, (m + 1)):
-        S = torch.cat([summon]*features_s.size()[0]) # second addend, features in the exemplar set
-        i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
-        exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)
-        
-        exemplar_set.append((exemplar_k, label))
+	    class_mean = torch.stack([class_mean]*features_s.size()[0])
 
-        # features of the exemplar k
-        phi = feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
-        summon += phi # update sum of features
-        del exemplar_k 
+	    exemplar_set = []
+	    exemplar_features = [] # list of Variables of shape (feature_size,)
+	    summon = torch.zeros(1,features_s.size()[1]).to(self.DEVICE) #(1,num_features)
+	    for k in range(1, (m + 1)):
+	        S = torch.cat([summon]*features_s.size()[0]) # second addend, features in the exemplar set
+	        i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
+	        exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)
+	        
+	        exemplar_set.append((exemplar_k, label))
+
+	        # features of the exemplar k
+	        phi = feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
+	        summon += phi # update sum of features
+	        
+    # random choice of exemplars
+    else: 
+    	tensors_size = len(tensors)
+    	for k in range(1, (m + 1)):
+			i = random.randint(0,tensors_size) # this way the same exemplar may be selected multiple times
+			exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)     
+	        exemplar_set.append((exemplar_k, label))
+    	pass
 
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
-
+    
     # cleaning
     torch.cuda.empty_cache()
 
