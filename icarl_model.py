@@ -16,7 +16,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 import numpy as np
 from PIL import Image
-from torch.utils.data import DataLoader
+from torch.utils.data import Subset, DataLoader
 from torch.backends import cudnn
 from torch.autograd import Variable
 import copy
@@ -225,14 +225,21 @@ class ICaRL(nn.Module):
 	    class_mean = torch.stack([class_mean]*features_s.size()[0])
 
 	    exemplar_set = []
+
+      # ---new try to use only the index
+      exemplar_set_indices = []
+
 	    exemplar_features = [] # list of Variables of shape (feature_size,)
 	    summon = torch.zeros(1,features_s.size()[1]).to(self.DEVICE) #(1,num_features)
 	    for k in range(1, (m + 1)):
 	        S = torch.cat([summon]*features_s.size()[0]) # second addend, features in the exemplar set
 	        i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
 	        exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)
-	        
 	        exemplar_set.append((exemplar_k, label))
+
+          # ---new try to use only the index
+          exemplar_k_index = tensors[i.item()][0].unsqueeze(dim = 0)
+          exemplar_set_indices.append(exemplar_k_index)
 
 	        # features of the exemplar k
 	        phi = feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
@@ -247,14 +254,14 @@ class ICaRL(nn.Module):
 	        exemplar_set.append((exemplar_k, label))
     	pass
 
-    self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
+    self.exemplar_sets.append(exemplar_set_indices) #update exemplar sets with the updated exemplars images
     
     # cleaning
     torch.cuda.empty_cache()
 
   # creation of an auxiliary dataset (actually a simple list) that will be concatenated
   # to the train_subset
-  def augment_dataset_with_exemplars(self, dataset):
+  def augment_dataset_with_exemplars1(self, dataset):
     """
       Args:
           dataset: @TOREMOVE not used
@@ -270,7 +277,17 @@ class ICaRL(nn.Module):
             aus_dataset.append((img, label))
     return aus_dataset 
 
-  def update_representation(self, dataset, new_classes):
+  # -- new try to work with indices
+  def augment_dataset_with_exemplars(self, train_dataset): #complete train dataset
+    all_exemplars_indices = []
+    for exemplar_set in self.exemplar_sets:
+      for exemplar_index in exemplar_set:
+        all_exemplars_indices.extend(exemplar_index)
+
+    exemplars_dataset = Subset(train_dataset, all_exemplars_indices)
+    return exemplars_dataset
+
+  def update_representation(self, dataset, train_dataset_big, new_classes):
     #print(new_classes)
     # 1 - retrieve the classes from the dataset (which is the current train_subset)
     # 2 - retrieve the new classes
@@ -392,9 +409,13 @@ class ConcatDataset(Dataset):
             _, image,label = self.dataset1[index] #here it leans on cifar100 get item
             return image,label
         else:
-            image, label = self.dataset2[index - self.l1]
-            image = self.transform(image) # exemplar transform defined in the main
-            return image,label
+            """image, label = self.dataset2[index - self.l1]
+                                                image = self.transform(image) # exemplar transform defined in the main
+                                                return image,label"""
+
+            # try to work with indices and subset of the trainset
+            _, image, label = self.dataset2[index - self.l1]
+            return image, label
 
     def __len__(self):
         return (self.l1 + self.l2)
