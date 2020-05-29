@@ -60,8 +60,6 @@ class ICaRL(nn.Module):
 
     gc.collect()
     
-    self.transform = transform
-
     # List containing exemplar_sets
     # Each exemplar_set is a np.array of N images
     self.exemplar_sets = []
@@ -71,8 +69,6 @@ class ICaRL(nn.Module):
     # for the classification/distillation loss we have two alternatives
     # 1- BCE loss with Logits (reduction could be mean or sum)
     # 2- BCE loss + sigmoid
-    """self.cls_loss = nn.BCEWithLogitsLoss(reduction = 'mean')
-                self.dist_loss = nn.BCEWithLogitsLoss(reduction = 'mean')"""
     # actually we use just one loss as explained on the forum
     
 
@@ -134,7 +130,7 @@ class ICaRL(nn.Module):
 
   # classification via fc layer (similar to lwf approach)
   def FCC_classify(self, batch_imgs):
-    _, preds = torch.max(torch.softmax(self.net(images), dim=1), dim=1, keepdim=False)
+    _, preds = torch.max(torch.softmax(self.net(batch_imgs), dim=1), dim=1, keepdim=False)
     return preds
 
   # NME classification from iCaRL paper
@@ -181,12 +177,11 @@ class ICaRL(nn.Module):
 
   # implementation of alg. 4 of icarl paper
   # iCaRL ConstructExemplarSet
-  def construct_exemplar_set(self, tensors, m, transform,label):
+  def construct_exemplar_set(self, tensors, m, label):
     """
       Args:
           tensors: train_subset containing a single label
           m: number of exemplars allowed/exemplar set (class)
-          transform: @TOREMOVE
           label: considered class
     """
     torch.no_grad()
@@ -233,7 +228,7 @@ class ICaRL(nn.Module):
           results = pd.DataFrame((class_mean-(1/k)*(features_s + S)).pow(2).sum(1).cpu(), columns=['result']).sort_values('result')
           results['index'] = results.index
           results = results.to_numpy()
-          #print(results)
+
           # select argmin not included in exemplar_set_indices
           for i in range(results.shape[0]):
             index = results[i, 1]
@@ -308,8 +303,6 @@ class ICaRL(nn.Module):
     net = self.net
 
     optimizer = optim.SGD(net.parameters(), lr=self.LR, weight_decay=self.WEIGHT_DECAY, momentum=self.MOMENTUM)
-
-    # Scheduler
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=self.MILESTONES, gamma=self.GAMMA, last_epoch=-1)
 
     criterion = utils.getLossCriterion()
@@ -396,7 +389,6 @@ class ConcatDataset(Dataset):
     def __init__(self, dataset1, dataset2):
         self.dataset1 = dataset1
         self.dataset2 = dataset2
-        #self.transform = transform
         self.l1 = len(dataset1)
         self.l2 = len(dataset2)
 
@@ -406,7 +398,6 @@ class ConcatDataset(Dataset):
             return _, image,label
         else:
             _, image, label = self.dataset2[index - self.l1]
-            #image = self.transform(image) # exemplar transform defined in the main - not used anymore
             return _, image,label
 
     def __len__(self):
