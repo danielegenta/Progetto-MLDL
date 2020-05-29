@@ -233,7 +233,7 @@ class ICaRL(nn.Module):
           S = torch.cat([summon]*features_s.size()[0]) # second addend, features in the exemplar set
           results = pd.DataFrame((class_mean-(1/k)*(features_s + S)).pow(2).sum(1).cpu().numpy(), columns=['result']).sort_values('result')
           results['index'] = results.index
-          results.to_numpy()
+          results = results.to_numpy()
 
           # select argmin not included in exemplar_set_indices
           for i in range(results.shape[0]):
