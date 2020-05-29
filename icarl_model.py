@@ -389,7 +389,7 @@ class ICaRL(nn.Module):
 
   def joinSubsets(self, dataset, subsets):
     indices = []
-    if len(subsets) > 0
+    if len(subsets) > 0:
       for s in subsets:
           indices += s.indices
       return Subset(dataset, indices)
