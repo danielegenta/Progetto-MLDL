@@ -226,6 +226,7 @@ class ICaRL(nn.Module):
 
       #---new try to use only the index
       exemplar_set_indices = set()
+      exemplar_list_indices = []
 
       exemplar_features = [] # list of Variables of shape (feature_size,)
       summon = torch.zeros(1,features_s.size()[1]).to(self.DEVICE) #(1,num_features)
@@ -243,6 +244,8 @@ class ICaRL(nn.Module):
               exemplar_k = tensors[index][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)
               exemplar_set.append((exemplar_k, label))
               exemplar_k_index = tensors[index][0] # index of the img on the real dataset
+              
+              exemplar_list_indices.add(exemplar_k_index)
               exemplar_set_indices.add(exemplar_k_index)
               break
 
@@ -268,7 +271,9 @@ class ICaRL(nn.Module):
         exemplar_set.append((exemplar_k, label))
     
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
-    self.exemplar_sets_indices.append(exemplar_set_indices)
+    self.exemplar_sets_indices.append(exemplar_list_indices)
+
+    print(exemplar_set)
 
     # cleaning
     torch.cuda.empty_cache()
@@ -427,7 +432,7 @@ class ConcatDataset(Dataset):
     def __init__(self, dataset1, dataset2):
         self.dataset1 = dataset1
         self.dataset2 = dataset2
-        self.transform = transform
+        #self.transform = transform
         self.l1 = len(dataset1)
         self.l2 = len(dataset2)
 
