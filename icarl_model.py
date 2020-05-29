@@ -115,7 +115,6 @@ class ICaRL(nn.Module):
           feature = feature_extractor(exemplar)
 
           #feature.data = feature.data / feature.data.norm() # Normalize
-
           features.append(feature)
 
           # cleaning 
@@ -262,7 +261,7 @@ class ICaRL(nn.Module):
   # -- this is not used anymore --
   # creation of an auxiliary dataset (actually a simple list) that will be concatenated
   # to the train_subset
-  def augment_dataset_with_exemplars1(self, dataset):
+  def augment_dataset_with_exemplars_old(self, dataset):
     """
       Args:
           dataset: @TOREMOVE not used
@@ -278,12 +277,16 @@ class ICaRL(nn.Module):
             aus_dataset.append((img, label))
     return aus_dataset 
 
-  def augment_dataset_with_exemplars(self, train_dataset): #complete train dataset
+  def augment_dataset_with_exemplars(self, train_dataset): #complete train dataset (seen so far)
     all_exemplars_indices = []
     for exemplar_set_indices in self.exemplar_sets_indices:
         all_exemplars_indices.extend(exemplar_set_indices)
 
     exemplars_dataset = Subset(train_dataset, all_exemplars_indices)
+
+    # [DEBUG]
+    print(exemplars_dataset)
+    
     return exemplars_dataset
 
 
