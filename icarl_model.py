@@ -115,7 +115,7 @@ class ICaRL(nn.Module):
           exemplar = exemplar.to(self.DEVICE)
           feature = feature_extractor(exemplar)
 
-          #feature.data = feature.data / feature.data.norm() # Normalize
+          feature.data = feature.data / feature.data.norm() # Normalize
           features.append(feature)
 
           # cleaning 
@@ -262,7 +262,7 @@ class ICaRL(nn.Module):
           # features of the exemplar k
           phi = feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
           summon += phi # update sum of features
-      exemplar_set_indices = list(exemplar_set_indices)
+      #exemplar_set_indices = list(exemplar_set_indices) => useless
     else:
       tensors_size = len(tensors)
       for k in range(1, (m + 1)):
@@ -272,8 +272,6 @@ class ICaRL(nn.Module):
     
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
     self.exemplar_sets_indices.append(exemplar_list_indices)
-
-    print(exemplar_set)
 
     # cleaning
     torch.cuda.empty_cache()
