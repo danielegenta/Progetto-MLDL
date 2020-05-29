@@ -309,7 +309,10 @@ class ICaRL(nn.Module):
     # join the datasets
     exemplars_dataset = self.augment_dataset_with_exemplars(train_dataset_big)
     #augmented_dataset = ConcatDataset(dataset, exemplars_dataset, self.transform)
-    augmented_dataset = self.joinSubsets(train_dataset_big, exemplars_dataset)
+    if len(exemplars_dataset) > 0:
+      augmented_dataset = self.joinSubsets(train_dataset_big, exemplars_dataset)
+    else: 
+      augmented_dataset = dataset # first iteration
 
     print(len(augmented_dataset))
 
@@ -389,12 +392,9 @@ class ICaRL(nn.Module):
 
   def joinSubsets(self, dataset, subsets):
     indices = []
-    if len(subsets) > 0:
-      for s in subsets:
-          indices += s.indices
-      return Subset(dataset, indices)
-    else:
-      return subsets
+    for s in subsets:
+        indices += s.indices
+    return Subset(dataset, indices)
 
 # ----------
 
