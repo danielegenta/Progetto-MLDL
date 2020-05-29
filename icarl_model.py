@@ -312,6 +312,8 @@ class ICaRL(nn.Module):
     else: 
       augmented_dataset = dataset # first iteration
 
+    print(len(augmented_dataset))
+
     # 6 - run network training, with loss function
 
     net = self.net
