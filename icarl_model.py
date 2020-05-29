@@ -308,7 +308,7 @@ class ICaRL(nn.Module):
     exemplars_dataset = self.augment_dataset_with_exemplars(train_dataset_big)
     #augmented_dataset = ConcatDataset(dataset, exemplars_dataset, self.transform)
     if len(exemplars_dataset) > 0:
-      augmented_dataset = self.joinSubsets(train_dataset_big, exemplars_dataset)
+      augmented_dataset = self.joinSubsets(train_dataset_big [dataset, exemplars_dataset])
     else: 
       augmented_dataset = dataset # first iteration
 
