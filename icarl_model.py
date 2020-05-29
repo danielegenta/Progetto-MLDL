@@ -302,12 +302,12 @@ class ICaRL(nn.Module):
     exemplars_dataset = self.augment_dataset_with_exemplars(train_dataset_big)
     #
     if len(exemplars_dataset) > 0:
-      augmented_dataset = ConcatDataset(dataset, exemplars_dataset, self.transform)
+      augmented_dataset = ConcatDataset(dataset, exemplars_dataset)
       #augmented_dataset = self.joinSubsets(train_dataset_big, [dataset, exemplars_dataset])
     else: 
       augmented_dataset = dataset # first iteration
 
-    print(len(augmented_dataset))
+    print(len(augmented_dataset)) # ok in both ways
 
     # 6 - run network training, with loss function
 
@@ -407,7 +407,7 @@ from torch.utils.data import Dataset
 """
 class ConcatDataset(Dataset):
     
-    def __init__(self, dataset1, dataset2, transform):
+    def __init__(self, dataset1, dataset2):
         self.dataset1 = dataset1
         self.dataset2 = dataset2
         self.transform = transform
@@ -420,7 +420,7 @@ class ConcatDataset(Dataset):
             return _, image,label
         else:
             _, image, label = self.dataset2[index - self.l1]
-            #image = self.transform(image) # exemplar transform defined in the main
+            #image = self.transform(image) # exemplar transform defined in the main - not used anymore
             return _, image,label
 
     def __len__(self):
