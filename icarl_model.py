@@ -272,6 +272,8 @@ class ICaRL(nn.Module):
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
     self.exemplar_sets_indices.append(exemplar_list_indices)
 
+    print(self.exemplar_sets_indices)
+
     # cleaning
     torch.cuda.empty_cache()
 
