@@ -237,7 +237,7 @@ class ICaRL(nn.Module):
           exemplar_set.append((exemplar_k, label))
 
           # ---new try to use also the index => no need to store entire img
-          exemplar_k_index = tensors[i.item()][0].unsqueeze(dim = 0)
+          exemplar_k_index = tensors[i.item()][0] # index of the img on the real dataset
           exemplar_set_indices.append(exemplar_k_index)
 
           # features of the exemplar k
@@ -252,7 +252,7 @@ class ICaRL(nn.Module):
         exemplar_set.append((exemplar_k, label))
     
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
-    self.exemplar_sets_indices.append(exemplar_set)
+    self.exemplar_sets_indices.append(exemplar_set_indices)
 
     # cleaning
     torch.cuda.empty_cache()
