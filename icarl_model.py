@@ -1,5 +1,4 @@
 """
-    
     This class implements the main model of iCaRL 
     and all the methods regarding the exemplars
     from delivery: iCaRL is made up of 2 components
@@ -273,6 +272,7 @@ class ICaRL(nn.Module):
         
         exemplar_set.append((exemplar_k, label))
         exemplar_set_indices.add(exemplar_k_index)
+        i = i+1
     
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
     self.exemplar_sets_indices.append(exemplar_list_indices)
