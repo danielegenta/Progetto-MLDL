@@ -273,7 +273,6 @@ class ICaRL(nn.Module):
     return exemplars_dataset
 
   def update_representation(self, dataset, train_dataset_big, new_classes):
-    #print(new_classes)
     # 1 - retrieve the classes from the dataset (which is the current train_subset)
     # 2 - retrieve the new classes
     # 1,2 are done in the main_icarl
@@ -295,8 +294,6 @@ class ICaRL(nn.Module):
       #augmented_dataset = utils.joinSubsets(train_dataset_big, [dataset, exemplars_dataset])
     else: 
       augmented_dataset = dataset # first iteration
-
-    print(len(augmented_dataset)) # ok in both ways
 
     # 6 - run network training, with loss function
 
