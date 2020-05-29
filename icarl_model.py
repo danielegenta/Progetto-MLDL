@@ -255,9 +255,9 @@ class ICaRL(nn.Module):
       unique_random_indexes = random.sample(range(0, tensors_size), k) # random sample without replacement k exemplars
       i = 0
       for k in range(1, (m + 1)):
-      	index = unique_random_indexes[i]
-      	exemplar_k = tensors[index][1].unsqueeze(dim = 0)
-       	exemplar_k_index = tensors[index][0]
+        index = unique_random_indexes[i]
+        exemplar_k = tensors[index][1].unsqueeze(dim = 0)
+        exemplar_k_index = tensors[index][0]
         exemplar_set.append((exemplar_k, label))
         exemplar_set_indices.add(exemplar_k_index)
         i = i + 1
