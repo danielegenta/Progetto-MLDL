@@ -417,11 +417,11 @@ class ConcatDataset(Dataset):
     def __getitem__(self,index):
         if index < self.l1:
             _, image,label = self.dataset1[index] #here it leans on cifar100 get item
-            return image,label
+            return _, image,label
         else:
             _, image, label = self.dataset2[index - self.l1]
             #image = self.transform(image) # exemplar transform defined in the main
-            return image,label
+            return _, image,label
 
     def __len__(self):
         return (self.l1 + self.l2)
