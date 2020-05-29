@@ -231,7 +231,7 @@ class ICaRL(nn.Module):
       summon = torch.zeros(1,features_s.size()[1]).to(self.DEVICE) #(1,num_features)
       for k in range(1, (m + 1)):
           S = torch.cat([summon]*features_s.size()[0]) # second addend, features in the exemplar set
-          results = pd.DataFrame((class_mean-(1/k)*(features_s + S)).pow(2).sum(1).cpu().numpy(), columns=['result']).sort_values('result')
+          results = pd.DataFrame(np.array((class_mean-(1/k)*(features_s + S)).pow(2).sum(1).cpu()), columns=['result']).sort_values('result')
           results['index'] = results.index
           results = results.to_numpy()
 
