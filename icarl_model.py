@@ -234,7 +234,7 @@ class ICaRL(nn.Module):
           results = pd.DataFrame((class_mean-(1/k)*(features_s + S)).pow(2).sum(1).cpu(), columns=['result']).sort_values('result')
           results['index'] = results.index
           #results = results.to_numpy()
-
+          print(results)
           # select argmin not included in exemplar_set_indices
           for i in range(results.shape[0]):
             index = results[i, 1]
