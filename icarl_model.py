@@ -64,7 +64,7 @@ class ICaRL(nn.Module):
 
     # List containing exemplar_sets
     # Each exemplar_set is a np.array of N images
-    self.exemplar_sets = {}
+    self.exemplar_sets = []
     self.exemplar_sets_indices = []
 
     
