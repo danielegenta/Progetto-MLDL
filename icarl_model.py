@@ -257,11 +257,10 @@ class ICaRL(nn.Module):
       for k in range(1, (m + 1)):
       	index = unique_random_indexes[i]
         exemplar_k = tensors[index][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)  
-        exemplar_k_index = tensors[index][0].unsqueeze(dim = 0)   
-        
+        exemplar_k_index = tensors[index][0].unsqueeze(dim = 0)
         exemplar_set.append((exemplar_k, label))
         exemplar_set_indices.add(exemplar_k_index)
-        i = i+1
+        i = i + 1
     
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
     self.exemplar_sets_indices.append(exemplar_list_indices)
