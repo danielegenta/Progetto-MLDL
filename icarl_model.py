@@ -27,6 +27,7 @@ from Cifar100 import utils
 from Cifar100.resnet import resnet32
 from Cifar100.Dataset.cifar100 import CIFAR100
 import random
+import pandas as pd
 
 
 # feature_size: 2048, why?
@@ -224,25 +225,40 @@ class ICaRL(nn.Module):
       exemplar_set = []
 
       #---new try to use only the index
-      exemplar_set_indices = []
+      exemplar_set_indices = set()
 
       exemplar_features = [] # list of Variables of shape (feature_size,)
       summon = torch.zeros(1,features_s.size()[1]).to(self.DEVICE) #(1,num_features)
       for k in range(1, (m + 1)):
           S = torch.cat([summon]*features_s.size()[0]) # second addend, features in the exemplar set
-          i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
-          exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)
-          
-          exemplar_set.append((exemplar_k, label))
+          results = pd.DataFrame((class_mean-(1/k)*(features_s + S)).pow(2).sum(1).numpy(), columns=['result']).sort_values('result')
+          results['index'] = results.index
+          results.to_numpy()
 
-          # ---new try to use also the index => no need to store entire img
-          exemplar_k_index = tensors[i.item()][0] # index of the img on the real dataset
-          exemplar_set_indices.append(exemplar_k_index)
+          # select argmin not included in exemplar_set_indices
+          for i in range(results.shape[0]):
+            index = results[i, 1]
+            exemplar_k_index = tensors[index][0]
+            if exemplar_k_index not in exemplar_set_indices:
+              exemplar_k = tensors[index][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)
+              exemplar_set.append((exemplar_k, label))
+              exemplar_k_index = tensors[index][0] # index of the img on the real dataset
+              exemplar_set_indices.add(exemplar_k_index)
+
+
+          # i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
+          # exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)
+          
+          # exemplar_set.append((exemplar_k, label))
+
+          # # ---new try to use also the index => no need to store entire img
+          # exemplar_k_index = tensors[i.item()][0] # index of the img on the real dataset
+          # exemplar_set_indices.add(exemplar_k_index)
 
           # features of the exemplar k
           phi = feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
           summon += phi # update sum of features
-          
+      exemplar_set_indices = list(exemplar_set_indices)
     else:
       tensors_size = len(tensors)
       for k in range(1, (m + 1)):
