@@ -2,11 +2,9 @@
     
     This class implements the main model of iCaRL 
     and all the methods regarding the exemplars
-
     from delivery: iCaRL is made up of 2 components
     - feature extractor (a convolutional NN) => resnet32 optimized on cifar100
     - classifier => a FC layer OR a non-parametric classifier (NME)
-
 """
 
 import torch
@@ -28,7 +26,6 @@ from torchvision.transforms import ToPILImage
 from Cifar100 import utils
 from Cifar100.resnet import resnet32
 from Cifar100.Dataset.cifar100 import CIFAR100
-
 import random
 
 
@@ -67,7 +64,8 @@ class ICaRL(nn.Module):
 
     # List containing exemplar_sets
     # Each exemplar_set is a np.array of N images
-    self.exemplar_sets = []
+    self.exemplar_sets = {}
+    self.exemplar_sets_indices = []
 
     
     # for the classification/distillation loss we have two alternatives
@@ -112,6 +110,7 @@ class ICaRL(nn.Module):
       for exemplar_set in self.exemplar_sets:
         features=[]
         for exemplar, label in exemplar_set:
+
           exemplar = exemplar.to(self.DEVICE)
           feature = feature_extractor(exemplar)
 
@@ -135,10 +134,10 @@ class ICaRL(nn.Module):
 
     self.exemplar_means = exemplar_means
 
-  """# classification via fc layer (similar to lwf approach)
+  # classification via fc layer (similar to lwf approach)
   def FCC_classify(self, batch_imgs):
-	  _, preds = torch.max(torch.softmax(self.net(images), dim=1), dim=1, keepdim=False)
-    return preds"""
+    _, preds = torch.max(torch.softmax(self.net(images), dim=1), dim=1, keepdim=False)
+    return preds
 
   # NME classification from iCaRL paper
   def classify(self, batch_imgs):
@@ -196,67 +195,69 @@ class ICaRL(nn.Module):
     torch.cuda.empty_cache()
     gc.collect()
 
-    if self.herding: 
+    if self.herding:
 
-	    feature_extractor = self.feature_extractor.to(self.DEVICE)
-	    feature_extractor.train(False)
+      feature_extractor = self.feature_extractor.to(self.DEVICE)
+      feature_extractor.train(False)
 
-	    # Compute and cache features for each example
-	    features = []
+      # Compute and cache features for each example
+      features = []
 
-	    loader = DataLoader(tensors,batch_size=self.BATCH_SIZE,shuffle=True,drop_last=False,num_workers = 4)
+      loader = DataLoader(tensors,batch_size=self.BATCH_SIZE,shuffle=True,drop_last=False,num_workers = 4)
 
-	    with torch.no_grad():
-	      for _, images, labels in loader:
-	        images = images.to(self.DEVICE)
-	        labels = labels.to(self.DEVICE)
-	        feature = feature_extractor(images) 
+      with torch.no_grad():
+        for _, images, labels in loader:
+          images = images.to(self.DEVICE)
+          labels = labels.to(self.DEVICE)
+          feature = feature_extractor(images) 
 
-	        #feature = feature / np.linalg.norm(feature.cpu()) # Normalize
-	        
-	        features.append(feature)
+          #feature = feature / np.linalg.norm(feature.cpu()) # Normalize
+          
+          features.append(feature)
 
-	    features_s = torch.cat(features)
-	    class_mean = features_s.mean(0)
+      features_s = torch.cat(features)
+      class_mean = features_s.mean(0)
 
-	    #class_mean = class_mean / np.linalg.norm(class_mean.cpu()) # Normalize
+      #class_mean = class_mean / np.linalg.norm(class_mean.cpu()) # Normalize
 
-	    class_mean = torch.stack([class_mean]*features_s.size()[0])
+      class_mean = torch.stack([class_mean]*features_s.size()[0])
 
-	    exemplar_set = []
+      exemplar_set = []
+
       #---new try to use only the index
       exemplar_set_indices = []
 
-	    exemplar_features = [] # list of Variables of shape (feature_size,)
-	    summon = torch.zeros(1,features_s.size()[1]).to(self.DEVICE) #(1,num_features)
-	    for k in range(1, (m + 1)):
-	        S = torch.cat([summon]*features_s.size()[0]) # second addend, features in the exemplar set
-	        i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
-	        exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)
-	        exemplar_set.append((exemplar_k, label))
+      exemplar_features = [] # list of Variables of shape (feature_size,)
+      summon = torch.zeros(1,features_s.size()[1]).to(self.DEVICE) #(1,num_features)
+      for k in range(1, (m + 1)):
+          S = torch.cat([summon]*features_s.size()[0]) # second addend, features in the exemplar set
+          i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
+          exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)
+          
+          exemplar_set.append((exemplar_k, label))
 
-          # ---new try to use only the index
+          # ---new try to use also the index => no need to store entire img
           exemplar_k_index = tensors[i.item()][0].unsqueeze(dim = 0)
           exemplar_set_indices.append(exemplar_k_index)
 
-	        # features of the exemplar k
-	        phi = feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
-	        summon += phi # update sum of features
-	        
-    # random choice of exemplars
-    else: 
-    	tensors_size = len(tensors)
-    	for k in range(1, (m + 1)):
-			i = random.randint(0,tensors_size) # this way the same exemplar may be selected multiple times
-			exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)     
-	        exemplar_set.append((exemplar_k, label))
-    	pass
-
-    self.exemplar_sets.append(exemplar_set_indices) #update exemplar sets with the updated exemplars images
+          # features of the exemplar k
+          phi = feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
+          summon += phi # update sum of features
+          
+    else:
+      tensors_size = len(tensors)
+      for k in range(1, (m + 1)):
+      i = random.randint(0,tensors_size) # this way the same exemplar may be selected multiple times
+      exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)     
+      exemplar_set.append((exemplar_k, label))
     
+    self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
+    self.exemplar_sets_indices.append(exemplar_set)
+
     # cleaning
     torch.cuda.empty_cache()
 
+  # -- this is not used anymore --
   # creation of an auxiliary dataset (actually a simple list) that will be concatenated
   # to the train_subset
   def augment_dataset_with_exemplars1(self, dataset):
@@ -275,15 +276,15 @@ class ICaRL(nn.Module):
             aus_dataset.append((img, label))
     return aus_dataset 
 
-  # -- new try to work with indices
   def augment_dataset_with_exemplars(self, train_dataset): #complete train dataset
     all_exemplars_indices = []
-    for exemplar_set in self.exemplar_sets:
-      for exemplar_index in exemplar_set:
-        all_exemplars_indices.extend(exemplar_index)
+    for exemplar_set_indices in self.exemplar_sets_indices:
+        all_exemplars_indices.extend(exemplar_set_indices)
 
     exemplars_dataset = Subset(train_dataset, all_exemplars_indices)
     return exemplars_dataset
+
+
 
   def update_representation(self, dataset, train_dataset_big, new_classes):
     #print(new_classes)
@@ -301,11 +302,9 @@ class ICaRL(nn.Module):
     # 4 - combine current train_subset (dataset) with exemplars
     #     to form a new augmented train dataset
     # join the datasets
-    exemplars_dataset = self.augment_dataset_with_exemplars(dataset)
+    exemplars_dataset = self.augment_dataset_with_exemplars(train_dataset_big)
     augmented_dataset = ConcatDataset(dataset, exemplars_dataset, self.transform)
 
-
-    
     # 6 - run network training, with loss function
 
     net = self.net
@@ -389,9 +388,8 @@ from torch.utils.data import Dataset
   train
   --------
   exemplars
-
   train leans on cifar100
-  exemplars is managed here (exemplar_transform is performed)
+  exemplars is managed here (exemplar_transform is performed) => changed
 """
 class ConcatDataset(Dataset):
     
@@ -407,13 +405,9 @@ class ConcatDataset(Dataset):
             _, image,label = self.dataset1[index] #here it leans on cifar100 get item
             return image,label
         else:
-            """image, label = self.dataset2[index - self.l1]
-                                                image = self.transform(image) # exemplar transform defined in the main
-                                                return image,label"""
-
-            # try to work with indices and subset of the trainset
             _, image, label = self.dataset2[index - self.l1]
-            return image, label
+            #image = self.transform(image) # exemplar transform defined in the main
+            return image,label
 
     def __len__(self):
         return (self.l1 + self.l2)
