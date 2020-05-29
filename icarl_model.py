@@ -275,7 +275,7 @@ class ICaRL(nn.Module):
             aus_dataset.append((img, label))
     return aus_dataset 
 
-  def augment_dataset_with_exemplars(self, train_dataset): #complete train dataset (seen so far)
+  def build_exemplars_dataset(self, train_dataset): #complete train dataset (seen so far)
     all_exemplars_indices = []
     for exemplar_set_indices in self.exemplar_sets_indices:
         all_exemplars_indices.extend(exemplar_set_indices)
@@ -299,7 +299,7 @@ class ICaRL(nn.Module):
     # 4 - combine current train_subset (dataset) with exemplars
     #     to form a new augmented train dataset
     # join the datasets
-    exemplars_dataset = self.augment_dataset_with_exemplars(train_dataset_big)
+    exemplars_dataset = self.build_exemplars_dataset(train_dataset_big)
     #
     if len(exemplars_dataset) > 0:
       augmented_dataset = ConcatDataset(dataset, exemplars_dataset)
