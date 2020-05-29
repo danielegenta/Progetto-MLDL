@@ -15,6 +15,7 @@ import json
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from torch.utils.data import Subset, DataLoader
 
 # These are the default iCaRL hyper-parameters
 def getHyperparams():
