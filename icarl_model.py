@@ -276,10 +276,6 @@ class ICaRL(nn.Module):
     return aus_dataset 
 
   def augment_dataset_with_exemplars(self, train_dataset): #complete train dataset (seen so far)
-
-    print(self.exemplar_sets_indices)
-    print(self.exemplar_sets)
-
     all_exemplars_indices = []
     for exemplar_set_indices in self.exemplar_sets_indices:
         all_exemplars_indices.extend(exemplar_set_indices)
