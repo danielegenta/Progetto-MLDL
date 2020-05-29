@@ -127,11 +127,10 @@ class ICaRL(nn.Module):
         mean_exemplar = mean_exemplar.to('cpu')
         exemplar_means.append(mean_exemplar)
 
-        # cleaning
-        torch.no_grad()  
-        torch.cuda.empty_cache()
-
     self.exemplar_means = exemplar_means
+    # cleaning
+    torch.no_grad()  
+    torch.cuda.empty_cache()
 
   # classification via fc layer (similar to lwf approach)
   def FCC_classify(self, batch_imgs):
@@ -247,16 +246,6 @@ class ICaRL(nn.Module):
               exemplar_list_indices.append(exemplar_k_index)
               exemplar_set_indices.add(exemplar_k_index)
               break
-
-
-          # i = torch.argmin((class_mean-(1/k)*(features_s + S)).pow(2).sum(1),dim=0)
-          # exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)
-          
-          # exemplar_set.append((exemplar_k, label))
-
-          # # ---new try to use also the index => no need to store entire img
-          # exemplar_k_index = tensors[i.item()][0] # index of the img on the real dataset
-          # exemplar_set_indices.add(exemplar_k_index)
 
           # features of the exemplar k
           phi = feature_extractor(exemplar_k.to(self.DEVICE)) #feature_extractor(exemplar_k.to(self.DEVICE))
@@ -374,28 +363,25 @@ class ICaRL(nn.Module):
     self.net = copy.deepcopy(net)
     self.feature_extractor = copy.deepcopy(net)
     self.feature_extractor.fc = nn.Sequential()
+
+    #cleaning
     del net
-    #torch.no_grad()
-    #torch.cuda.empty_cache()
+    torch.cuda.empty_cache()
 
 
   # implementation of alg. 5 of icarl paper
   # iCaRL ReduceExemplarSet
   def reduce_exemplar_sets(self, m):
+  	    # i keep only the first m exemplar images
+        # where m is the UPDATED K/number_classes_seen
+        # the number of images per each exemplar set (class) progressively decreases
         for y, P_y in enumerate(self.exemplar_sets):
-            # i keep only the first m exemplar images
-            # where m is the UPDATED K/number_classes_seen
-            # the number of images per each exemplar set (class) progressively decreases
             self.exemplar_sets[y] = P_y[:m] 
         for x, P_x in enumerate(self.exemplar_sets_indices):
-            # i keep only the first m exemplar images
-            # where m is the UPDATED K/number_classes_seen
-            # the number of images per each exemplar set (class) progressively decreases
             self.exemplar_sets_indices[x] = P_x[:m] 
 
 
 # ---------- 
-
 from torch.utils.data import Dataset
 """
   Merge two different datasets (train and exemplars in our case)
