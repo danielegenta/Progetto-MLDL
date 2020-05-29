@@ -33,7 +33,7 @@ import pandas as pd
 # feature_size: 2048, why?
 # n_classes: 10 => 100
 class ICaRL(nn.Module):
-  def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM,K, transform, reverse_index = None):
+  def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM,K, herding, reverse_index = None):
     super(ICaRL, self).__init__()
     self.net = resnet32()
     self.net.fc = nn.Linear(self.net.fc.in_features, n_classes)
@@ -81,7 +81,7 @@ class ICaRL(nn.Module):
     self.compute_means = True
     self.exemplar_means = []
 
-    self.herding = True # random choice of exemplars or icarl exemplars strategy?
+    self.herding = herding # random choice of exemplars or icarl exemplars strategy?
   
   # increment the number of classes considered by the net
   # incremental learning approach, 0,10..100
@@ -264,10 +264,15 @@ class ICaRL(nn.Module):
           summon += phi # update sum of features
     else:
       tensors_size = len(tensors)
+      unique_random_indexes = random.sample(range(0, tensors_size), k) # random sample without replacement k exemplars
+      i = 0
       for k in range(1, (m + 1)):
-        i = random.randint(0,tensors_size) # this way the same exemplar may be selected multiple times
-        exemplar_k = tensors[i.item()][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)     
+      	index = unique_random_indexes[i]
+        exemplar_k = tensors[index][1].unsqueeze(dim = 0) # take the image from the tuple (index, img, label)  
+        exemplar_k_index = tensors[index][0].unsqueeze(dim = 0)   
+        
         exemplar_set.append((exemplar_k, label))
+        exemplar_set_indices.add(exemplar_k_index)
     
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
     self.exemplar_sets_indices.append(exemplar_list_indices)
@@ -275,22 +280,8 @@ class ICaRL(nn.Module):
     # cleaning
     torch.cuda.empty_cache()
 
-  # -- this is not used anymore --
-  # creation of an auxiliary dataset (actually a simple list) that will be concatenated
-  # to the train_subset
-  """
-  def augment_dataset_with_exemplars_old(self, dataset):
-    transformToImg = transforms.ToPILImage()
-    aus_dataset = []
-    for exemplar_set in self.exemplar_sets: #for each class and exemplar set for that class
-        for exemplar, label in exemplar_set:
-            #img = Image.fromarray(np.array(exemplar.cpu().squeeze()), mode = 'RGB') # Return a PIL image
-            img = transformToImg(exemplar.squeeze()).convert("RGB")
-            aus_dataset.append((img, label))
-    return aus_dataset 
-  """
-
-  def build_exemplars_dataset(self, train_dataset): #complete train dataset (seen so far)
+  # build a exemplar dataset as a subset of the train dataset
+  def build_exemplars_dataset(self, train_dataset): #complete train dataset
     all_exemplars_indices = []
     for exemplar_set_indices in self.exemplar_sets_indices:
         all_exemplars_indices.extend(exemplar_set_indices)
@@ -318,7 +309,7 @@ class ICaRL(nn.Module):
     #
     if len(exemplars_dataset) > 0:
       augmented_dataset = ConcatDataset(dataset, exemplars_dataset)
-      #augmented_dataset = self.joinSubsets(train_dataset_big, [dataset, exemplars_dataset])
+      #augmented_dataset = utils.joinSubsets(train_dataset_big, [dataset, exemplars_dataset])
     else: 
       augmented_dataset = dataset # first iteration
 
@@ -402,13 +393,8 @@ class ICaRL(nn.Module):
             # the number of images per each exemplar set (class) progressively decreases
             self.exemplar_sets_indices[x] = P_x[:m] 
 
-  def joinSubsets(self, dataset, subsets):
-    indices = []
-    for s in subsets:
-        indices += s.indices
-    return Subset(dataset, indices)
 
-# ----------
+# ---------- 
 
 from torch.utils.data import Dataset
 """
@@ -440,5 +426,4 @@ class ConcatDataset(Dataset):
 
     def __len__(self):
         return (self.l1 + self.l2)
-
 #------------
