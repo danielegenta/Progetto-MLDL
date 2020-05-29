@@ -224,8 +224,7 @@ class ICaRL(nn.Module):
 	    class_mean = torch.stack([class_mean]*features_s.size()[0])
 
 	    exemplar_set = []
-
-      # ---new try to use only the index
+      #---new try to use only the index
       exemplar_set_indices = []
 
 	    exemplar_features = [] # list of Variables of shape (feature_size,)
