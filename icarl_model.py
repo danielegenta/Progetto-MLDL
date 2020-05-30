@@ -183,6 +183,7 @@ class ICaRL(nn.Module):
       print(self.exemplar_means)
       print(self.means_from_classes)
 
+
       means_exemplars = torch.cat(self.exemplar_means, dim=0)
       means_exemplars = torch.stack([means_exemplars] * batch_imgs_size)
       means_exemplars = means_exemplars.transpose(1, 2) 
@@ -290,7 +291,7 @@ class ICaRL(nn.Module):
     # --- new ---
     tensor_set = []
     for i in range(0, len(tensors)):
-      tensor_set.append(tensors[i][1].unsqueeze(dim = 0), label)
+      tensor_set.append((tensors[i][1].unsqueeze(dim = 0), label))
     
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
     self.exemplar_sets_indices.append(exemplar_list_indices)
