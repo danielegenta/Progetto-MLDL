@@ -156,7 +156,7 @@ class ICaRL(nn.Module):
     self.means_from_classes = tensors_mean
 
     print(len(exemplar_means))
-    print(len(tensors_mean))
+    print(len(tensors_mean[0]))
 
     # cleaning
     torch.no_grad()  
