@@ -391,6 +391,16 @@ class ICaRL(nn.Module):
     torch.cuda.empty_cache()
 
 
+  def bce_loss(self, outputs, labels, encode=False):
+    criterion = nn.BCEWithLogitsLoss(reduction = 'mean')
+
+    if encode:
+      labels = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
+      labels = labels.type_as(outputs)
+
+    return criterion(outputs, labels)
+
+
   # implementation of alg. 5 of icarl paper
   # iCaRL ReduceExemplarSet
   def reduce_exemplar_sets(self, m):
