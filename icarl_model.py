@@ -107,28 +107,6 @@ class ICaRL(nn.Module):
     feature_extractor = self.feature_extractor.to(self.DEVICE)
     feature_extractor.train(False)
 
-    # old means mgmt -- exemplars mean on exemplars
-    with torch.no_grad():
-      for exemplar_set in self.exemplar_sets:
-        features=[]
-        for exemplar, label in exemplar_set:
-
-          exemplar = exemplar.to(self.DEVICE)
-          feature = feature_extractor(exemplar)
-
-          feature.data = feature.data / feature.data.norm() # Normalize
-          features.append(feature)
-
-          # cleaning 
-          torch.no_grad()
-          torch.cuda.empty_cache()
-
-        features = torch.stack(features) #(num_exemplars,num_features)
-        mean_exemplar = features.mean(0) 
-        mean_exemplar.data = mean_exemplar.data / mean_exemplar.data.norm() # Re-normalize
-        mean_exemplar = mean_exemplar.to('cpu')
-        exemplar_means.append(mean_exemplar)
-
     # new mean mgmt
     tensors_mean = []
     with torch.no_grad():
@@ -146,17 +124,14 @@ class ICaRL(nn.Module):
           torch.no_grad()
           torch.cuda.empty_cache()
 
-      features = torch.stack(features) #(num_exemplars,num_features)
-      mean_tensor = features.mean(0) 
-      mean_tensor.data = mean_tensor.data / mean_tensor.data.norm() # Re-normalize
-      mean_tensor = mean_tensor.to('cpu')
-      tensors_mean.append(mean_tensor)
+        features = torch.stack(features) #(num_exemplars,num_features)
+        mean_tensor = features.mean(0) 
+        mean_tensor.data = mean_tensor.data / mean_tensor.data.norm() # Re-normalize
+        mean_tensor = mean_tensor.to('cpu')
+        tensors_mean.append(mean_tensor)
 
-    self.exemplar_means = exemplar_means  # nb the mean is computed over all the imgs
-    self.means_from_classes = tensors_mean
-
-    print(len(exemplar_means))
-    print(len(tensors_mean[0]))
+    self.exemplar_means = tensors_mean  # nb the mean is computed over all the imgs
+    #self.means_from_classes = tensors_mean
 
     # cleaning
     torch.no_grad()  
@@ -184,7 +159,6 @@ class ICaRL(nn.Module):
 
       # update exemplar_means with the mean
       # of all the train data for a given class
-
 
       means_exemplars = torch.cat(self.exemplar_means, dim=0)
       means_exemplars = torch.stack([means_exemplars] * batch_imgs_size)
