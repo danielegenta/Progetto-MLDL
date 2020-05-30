@@ -388,7 +388,7 @@ class ICaRL(nn.Module):
                 print('summed loss1', splittedloss.item(), loss1.item(), loss2.item())
                 print('summed loss2', splittedloss2.item(), (1-alpha)*loss1.item(), alpha*loss2.item())
 
-                donLoss = sum(self.dist_loss(outputs[:,y], out_old[:,y]) for y in range(self.n_known))
+                donLoss = sum(criterion(outputs[:,y], out_old[:,y]) for y in range(self.n_known))
                 print('donlee dist loss', donLoss.item())
 
             loss.backward()
