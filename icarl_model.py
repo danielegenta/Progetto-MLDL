@@ -132,7 +132,7 @@ class ICaRL(nn.Module):
     with torch.no_grad():
       for tensor_set in self.data_from_classes:
         features = []
-        for _, tensor, label in tensor_set:
+        for tensor, label in tensor_set:
           
           tensor = tensor.to(self.DEVICE)
           feature = feature_extractor(tensor)
@@ -286,12 +286,17 @@ class ICaRL(nn.Module):
         exemplar_set.append((exemplar_k, label))
         exemplar_set_indices.add(exemplar_k_index)
         i = i + 1
+
+    # --- new ---
+    tensor_set = []
+    for i in range(0, len(tensors):
+      tensor_set.append(tensors[i][1], label)
     
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
     self.exemplar_sets_indices.append(exemplar_list_indices)
 
     # this is used to compute more accurately the means of the exemplar (see also computeMeans and classify)
-    self.data_from_classes.append(tensors)
+    self.data_from_classes.append(tensor_set)
 
     # cleaning
     torch.cuda.empty_cache()
