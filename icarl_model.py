@@ -392,7 +392,7 @@ class ICaRL(nn.Module):
                 print('donlee dist loss', donDistLoss.item())
 
                 CE = nn.CrossEntropyLoss()
-                donClassLoss = criterion(outputs, labels)
+                donClassLoss = CE(outputs, labels)
                 print('donlee class loss', donClassLoss.item())
                 print('donlee loss (CE + BCE)', (donClassLoss + donDistLoss).item())
                 print()
@@ -413,9 +413,13 @@ class ICaRL(nn.Module):
 
 
   def bce_class_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
+    # alpha = self.n_known/self.n_classes
+    # return (1-alpha)*self.bce_loss(outputs, labels, encode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
     return self.bce_loss(outputs, labels, encode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
 
   def bce_dist_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
+    # alpha = self.n_known/self.n_classes
+    # return alpha*self.bce_loss(outputs, labels, encode=False, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
     return self.bce_loss(outputs, labels, encode=False, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
 
   def ce_class_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
