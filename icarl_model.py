@@ -388,12 +388,14 @@ class ICaRL(nn.Module):
                 print('summed loss1', splittedloss.item(), loss1.item(), loss2.item())
                 print('summed loss2', splittedloss2.item(), (1-alpha)*loss1.item(), alpha*loss2.item())
 
-                donLoss = sum(criterion(outputs[:,y], out_old[:,y]) for y in range(self.n_known))
-                print('donlee dist loss', donLoss.item())
+                donDistLoss = sum(criterion(outputs[:,y], out_old[:,y]) for y in range(self.n_known))
+                print('donlee dist loss', donDistLoss.item())
 
                 CE = nn.CrossEntropyLoss()
                 donClassLoss = criterion(outputs, labels)
                 print('donlee class loss', donClassLoss.item())
+                print('donlee loss (CE + BCE)', (donClassLoss + donDistLoss).item())
+                print()
 
             loss.backward()
             optimizer.step()
