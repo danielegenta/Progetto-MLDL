@@ -391,6 +391,10 @@ class ICaRL(nn.Module):
                 donLoss = sum(criterion(outputs[:,y], out_old[:,y]) for y in range(self.n_known))
                 print('donlee dist loss', donLoss.item())
 
+                CE = nn.CrossEntropyLoss()
+                donClassLoss = criterion(outputs, labels)
+                print('donlee class loss', donClassLoss.item())
+
             loss.backward()
             optimizer.step()
 
@@ -406,14 +410,52 @@ class ICaRL(nn.Module):
     torch.cuda.empty_cache()
 
 
-  def bce_loss(self, outputs, labels, encode=False):
+  def bce_class_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
+    return self.bce_loss(outputs, labels, encode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
+
+  def bce_dist_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
+    return self.bce_loss(outputs, labels, encode=False, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
+
+  def ce_class_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
+    return self.ce_loss(outputs, labels, decode=False, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
+    
+  def ce_dist_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
+    return self.ce_loss(outputs, labels, decode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
+
+  def l2_class_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
+    return self.bce_loss(outputs, labels, encode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
+
+  def l2_dist_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
+    return self.bce_loss(outputs, labels, encode=False, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
+
+
+  def bce_loss(self, outputs, labels, encode=False, row_start=None, row_end=None, col_start=None, col_end=None):
     criterion = nn.BCEWithLogitsLoss(reduction = 'mean')
 
     if encode:
       labels = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
       labels = labels.type_as(outputs)
 
-    return criterion(outputs, labels)
+    return criterion(outputs[row_start:row_end, col_start:col_end], labels[row_start:row_end, col_start:col_end])
+
+
+  def ce_loss(self, outputs, labels, decode=False, row_start=None, row_end=None, col_start=None, col_end=None):
+    criterion = nn.CrossEntropyLoss()
+
+    if decode:
+      labels = torch.argmax(labels, dim=1)
+    
+    return criterion(outputs[row_start:row_end, col_start:col_end], labels[row_start:row_end])
+
+
+  def l2_loss(self, outputs, labels, encode=False, row_start=None, row_end=None, col_start=None, col_end=None):
+    criterion = nn.MSELoss(reduction = 'mean')
+    
+    if encode:
+      labels = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
+      labels = labels.type_as(outputs)
+    
+    return criterion(outputs[row_start:row_end, col_start:col_end], labels[row_start:row_end, col_start:col_end])
 
 
   # implementation of alg. 5 of icarl paper
