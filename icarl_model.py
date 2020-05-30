@@ -132,7 +132,7 @@ class ICaRL(nn.Module):
     with torch.no_grad():
       for tensor_set in self.data_from_classes:
         features = []
-        for tensor, label in tensor_set:
+        for _, tensor, label in tensor_set:
           
           tensor = tensor.to(self.DEVICE)
           feature = feature_extractor(tensor)
