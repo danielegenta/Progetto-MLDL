@@ -77,6 +77,11 @@ class ICaRL(nn.Module):
     self.exemplar_means = []
 
     self.herding = herding # random choice of exemplars or icarl exemplars strategy?
+
+    # this is used as explained in the forum to compute the exemplar mean in a more accurate way
+    # populated during construct exemplar set and used in the classify step
+    self.data_from_classes = []
+    self.means_from_classes = []
   
   # increment the number of classes considered by the net
   # incremental learning approach, 0,10..100
@@ -123,7 +128,31 @@ class ICaRL(nn.Module):
         mean_exemplar = mean_exemplar.to('cpu')
         exemplar_means.append(mean_exemplar)
 
+    tensors_mean = []
+    with torch.no_grad():
+      for tensor_set in self.data_from_classes:
+        features = []
+        for tensor, label in tensor_set:
+          
+          tensor = tensor.to(self.DEVICE)
+          feature = feature_extractor(tensor)
+
+          feature.data = feature.data / feature.data.norm() # Normalize
+          features.append(feature)
+
+          # cleaning 
+          torch.no_grad()
+          torch.cuda.empty_cache()
+
+      features = torch.stack(features) #(num_exemplars,num_features)
+      mean_tensor = features.mean(0) 
+      mean_tensor.data = mean_tensor.data / mean_tensor.data.norm() # Re-normalize
+      mean_tensor = mean_tensor.to('cpu')
+      tensors_mean.append(mean_tensor)
+
     self.exemplar_means = exemplar_means
+    self.means_from_classes = tensors_mean
+
     # cleaning
     torch.no_grad()  
     torch.cuda.empty_cache()
@@ -147,6 +176,12 @@ class ICaRL(nn.Module):
       batch_imgs_size = batch_imgs.size(0)
       feature_extractor = self.feature_extractor.to(self.DEVICE)
       feature_extractor.train(False)
+
+      # update exemplar_means with the mean
+      # of all the train data for a given class
+
+      print(self.exemplar_means)
+      print(self.means_from_classes)
 
       means_exemplars = torch.cat(self.exemplar_means, dim=0)
       means_exemplars = torch.stack([means_exemplars] * batch_imgs_size)
@@ -254,6 +289,9 @@ class ICaRL(nn.Module):
     
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
     self.exemplar_sets_indices.append(exemplar_list_indices)
+
+    # this is used to compute more accurately the means of the exemplar (see also computeMeans and classify)
+    self.data_from_classes.append(tensors)
 
     # cleaning
     torch.cuda.empty_cache()
