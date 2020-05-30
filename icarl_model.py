@@ -155,8 +155,8 @@ class ICaRL(nn.Module):
     self.exemplar_means = exemplar_means  # nb the mean is computed over all the imgs
     self.means_from_classes = tensors_mean
 
-    print(exemplar_means)
-    print(tensors_mean)
+    print(len(exemplar_means))
+    print(len(tensors_mean))
 
     # cleaning
     torch.no_grad()  
