@@ -368,13 +368,28 @@ class ICaRL(nn.Module):
                 loss = criterion(outputs, labels_one_hot)
             # Distilation loss for old classes, class loss on new classes
             if len(self.exemplar_sets) > 0:
+                # print('outputs', outputs.size())
+                # print('labels_one_hot', labels_one_hot.size())
+            
+                labels_one_hot = labels_one_hot.type_as(outputs)
+                out_old = torch.sigmoid(old_net(images)) # Variable(torch.sigmoid(old_net(images)),requires_grad = False)
+                
+                #[outputold, onehot_new]
+                target = torch.cat((out_old[:,:self.n_known], labels_one_hot[:,self.n_known:]),dim=1)
+                loss = criterion(outputs,target)
+                print('original loss', loss.item())
 
-               labels_one_hot = labels_one_hot.type_as(outputs)[:,len(self.exemplar_sets):]
-               out_old = Variable(torch.sigmoid(old_net(images))[:,:len(self.exemplar_sets)],requires_grad = False)
+                loss1 = criterion(outputs[:,self.n_known:], labels_one_hot[:,self.n_known:])
+                loss2 = criterion(outputs[:,:self.n_known], out_old[:,:self.n_known])
 
-               #[outputold, onehot_new]
-               target = torch.cat((out_old, labels_one_hot),dim=1)
-               loss = criterion(outputs,target)
+                alpha = self.n_known/self.n_classes
+                splittedloss = loss1 + loss2
+                splittedloss2 = (1-alpha)*loss1 + alpha*loss2
+                print('summed loss1', splittedloss.item(), loss1.item(), loss2.item())
+                print('summed loss2', splittedloss2.item(), (1-alpha)*loss1.item(), alpha*loss2.item())
+
+                donLoss = sum(self.dist_loss(outputs[:,y], out_old[:,y]) for y in range(self.n_known))
+                print('donlee dist loss', donLoss.item())
 
             loss.backward()
             optimizer.step()
