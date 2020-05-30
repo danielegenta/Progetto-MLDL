@@ -395,6 +395,14 @@ class ICaRL(nn.Module):
                 donClassLoss = CE(outputs, labels)
                 print('donlee class loss', donClassLoss.item())
                 print('donlee loss (CE + BCE)', (donClassLoss + donDistLoss).item())
+                print('donlee loss (CE + BCE) rebalanced', ((1-alpha)*donClassLoss + alpha*donDistLoss).item())
+
+                
+                l2_loss1 =  self.l2_class_loss(outputs, labels)
+                l2_loss2 =  self.l2_dist_loss(outputs, out_old)
+                l2_loss = (1-alpha)*l2_loss1 + alpha*l2_loss2
+                print('L2 loss', (l2_loss1 + l2_loss2).item(), l2_loss1.item(), l2_loss2.item())
+                print('L2 loss rebalanced', l2_loss.item(), (1-alpha)*l2_loss1.item(), alpha*l2_loss2.item())
                 print()
 
             loss.backward()
