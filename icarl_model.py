@@ -107,7 +107,7 @@ class ICaRL(nn.Module):
     feature_extractor = self.feature_extractor.to(self.DEVICE)
     feature_extractor.train(False)
 
-      """    with torch.no_grad():
+    """with torch.no_grad():
       for exemplar_set in self.exemplar_sets:
         features=[]
         for exemplar, label in exemplar_set:
