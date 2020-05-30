@@ -289,8 +289,8 @@ class ICaRL(nn.Module):
 
     # --- new ---
     tensor_set = []
-    for i in range(0, len(tensors):
-      tensor_set.append(tensors[i][1], label)
+    for i in range(0, len(tensors)):
+      tensor_set.append(tensors[i][1].unsqueeze(dim = 0), label)
     
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
     self.exemplar_sets_indices.append(exemplar_list_indices)
