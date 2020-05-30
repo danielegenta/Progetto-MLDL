@@ -107,7 +107,7 @@ class ICaRL(nn.Module):
     feature_extractor = self.feature_extractor.to(self.DEVICE)
     feature_extractor.train(False)
 
-    with torch.no_grad():
+      """    with torch.no_grad():
       for exemplar_set in self.exemplar_sets:
         features=[]
         for exemplar, label in exemplar_set:
@@ -124,9 +124,9 @@ class ICaRL(nn.Module):
 
         features = torch.stack(features) #(num_exemplars,num_features)
         mean_exemplar = features.mean(0) 
-        mean_exemplar.data = mean_exemplar.data / mean_exemplar.data.norm() # Re-normalize
+        #mean_exemplar.data = mean_exemplar.data / mean_exemplar.data.norm() # Re-normalize
         mean_exemplar = mean_exemplar.to('cpu')
-        exemplar_means.append(mean_exemplar)
+        #exemplar_means.append(mean_exemplar)"""
 
     tensors_mean = []
     with torch.no_grad():
@@ -150,8 +150,8 @@ class ICaRL(nn.Module):
       mean_tensor = mean_tensor.to('cpu')
       tensors_mean.append(mean_tensor)
 
-    self.exemplar_means = exemplar_means
-    self.means_from_classes = tensors_mean
+    self.exemplar_means = tensors_mean # nb the mean is computed over all the imgs
+    #self.means_from_classes = tensors_mean
 
     # cleaning
     torch.no_grad()  
@@ -179,9 +179,6 @@ class ICaRL(nn.Module):
 
       # update exemplar_means with the mean
       # of all the train data for a given class
-
-      print(self.exemplar_means)
-      print(self.means_from_classes)
 
 
       means_exemplars = torch.cat(self.exemplar_means, dim=0)
