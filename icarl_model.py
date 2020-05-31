@@ -85,6 +85,9 @@ class ICaRL(nn.Module):
     # populated during construct exemplar set and used in the classify step
     self.data_from_classes = []
     self.means_from_classes = []
+
+    # Knn, svc classification
+    self.model = None
   
   # increment the number of classes considered by the net
   # incremental learning approach, 0,10..100
@@ -140,23 +143,15 @@ class ICaRL(nn.Module):
     torch.no_grad()  
     torch.cuda.empty_cache()
 
-  def SVC_classify(self, images):
-    pass
-
-  # classification via fc layer (similar to lwf approach)
-  def FCC_classify(self, images):
-    _, preds = torch.max(torch.softmax(self.net(images), dim=1), dim=1, keepdim=False)
-    return preds
-
-  # KNN classifier, classification based on K neareast exemplars
-  def KNN_classify(self, images, K_nn):
+  # train procedure common for KNN and SVC classifier (save a lot of training time)
+  def modelTrain(self, method, K_nn = None):
     torch.no_grad()
     torch.cuda.empty_cache()
 
     feature_extractor = self.feature_extractor.to(self.DEVICE)
     feature_extractor.train(False)
 
-    # -- train a KNN classifier
+    # -- train a SVC classifier
     X_train, y_train = [], []
 
     for exemplar_set in self.exemplar_sets:
@@ -168,13 +163,21 @@ class ICaRL(nn.Module):
             X_train.append(feature.cpu().detach().numpy())
             y_train.append(label)
     
-    model = KNeighborsClassifier(n_neighbors = K_nn)
-    model.fit(X_train, y_train)   
-    # --- end training
+    if method == 'KNN':
+      model = KNeighborsClassifier(n_neighbors = K_nn)
+    elif method == 'SVC':
+      model = LinearSVC()
+    self.model = model.fit(X_train, y_train)
 
-    # --- prediction 
+  # common classify function
+  def KNN_SVC_classify(self, images):
+    torch.no_grad()
+    torch.cuda.empty_cache()
+
+    # --- prediction
     X_pred = []
     images = images.to(self.DEVICE)
+    feature_extractor = self.feature_extractor.to(self.DEVICE)
     feature_extractor.train(False)
 
     features = feature_extractor(images)
@@ -183,11 +186,14 @@ class ICaRL(nn.Module):
       feature.data = feature.data / feature.data.norm() # Normalize
       X_pred.append(feature.cpu().detach().numpy())
     
-    preds = model.predict(X_pred)
+    preds = self.model.predict(X_pred)
     # --- end prediction
-
     return torch.tensor(preds)
-
+  
+  # classification via fc layer (similar to lwf approach)
+  def FCC_classify(self, images):
+    _, preds = torch.max(torch.softmax(self.net(images), dim=1), dim=1, keepdim=False)
+    return preds
   # NME classification from iCaRL paper
   def classify(self, batch_imgs):
       """Classify images by nearest-mean-of-exemplars
