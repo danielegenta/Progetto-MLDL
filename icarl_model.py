@@ -32,12 +32,12 @@ import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 
-def auto_loss_rebalancing(n_known, n_classes, loss_type):
+def auto_loss_rebalancing(n_known, n_classes, loss_type, lambda0=1):
   alpha = n_known/n_classes 
 
   if loss_type == 'class':
     return 1-alpha
-  return alpha
+  return lambda0*alpha
 
 def get_rebalancing(rebalancing=None):
   if rebalancing is None:
@@ -52,7 +52,7 @@ def get_rebalancing(rebalancing=None):
 class ICaRL(nn.Module):
   def __init__(self, feature_size, n_classes,\
       BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE, MILESTONES, MOMENTUM, K,\
-      herding, reverse_index = None, class_loss_criterion='bce', dist_loss_criterion='bce', loss_rebalancing='auto'):
+      herding, reverse_index = None, class_loss_criterion='bce', dist_loss_criterion='bce', loss_rebalancing='auto', lambda0=1):
     super(ICaRL, self).__init__()
     self.net = resnet32()
     self.net.fc = nn.Linear(self.net.fc.in_features, n_classes)
@@ -91,7 +91,7 @@ class ICaRL(nn.Module):
     # 2- BCE loss + sigmoid
     # actually we use just one loss as explained on the forum
 
-    self.class_loss, self.dist_loss = self.build_loss(class_loss_criterion, dist_loss_criterion, loss_rebalancing)
+    self.class_loss, self.dist_loss = self.build_loss(class_loss_criterion, dist_loss_criterion, loss_rebalancing, lambda0=lambda0)
 
     # Means of exemplars (cntroids)
     self.compute_means = True
@@ -437,7 +437,7 @@ class ICaRL(nn.Module):
     torch.cuda.empty_cache()
 
 
-  def build_loss(self, class_loss_criterion, dist_loss_criterion, rebalancing=None):
+  def build_loss(self, class_loss_criterion, dist_loss_criterion, rebalancing=None, lambda0=1):
     class_loss_func = None
     dist_loss_func = None
 
@@ -458,11 +458,11 @@ class ICaRL(nn.Module):
     rebalancing = get_rebalancing(rebalancing)
     
     def class_loss(outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-      alpha = rebalancing(self.n_known, self.n_classes, 'class')
+      alpha = rebalancing(self.n_known, self.n_classes, 'class', lambda0=lambda0)
       return alpha*class_loss_func(outputs, labels, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
     
     def dist_loss(outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-      alpha = rebalancing(self.n_known, self.n_classes, 'dist')
+      alpha = rebalancing(self.n_known, self.n_classes, 'dist', lambda0=lambda0)
       return alpha*dist_loss_func(outputs, labels, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
     
     return class_loss, dist_loss
