@@ -174,13 +174,12 @@ class ICaRL(nn.Module):
     feature_extractor.train(False)
 
     features = feature_extractor(images)
-	  for feature in features:
+    for feature in features:
       feature.data = feature.data / feature.data.norm() # Normalize
-	    X_pred.append(feature.numpy())
-
-	preds = model.predict(X_pred)
-	return preds
-
+      X_pred.append(feature.numpy())
+    
+    preds = model.predict(X_pred)
+    return preds
 
   # NME classification from iCaRL paper
   def classify(self, batch_imgs):
