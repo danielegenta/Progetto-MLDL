@@ -140,6 +140,9 @@ class ICaRL(nn.Module):
     torch.no_grad()  
     torch.cuda.empty_cache()
 
+  def SVC_classify(self, images):
+    pass
+
   # classification via fc layer (similar to lwf approach)
   def FCC_classify(self, images):
     _, preds = torch.max(torch.softmax(self.net(images), dim=1), dim=1, keepdim=False)
@@ -161,7 +164,7 @@ class ICaRL(nn.Module):
             exemplar = exemplar.to(self.DEVICE)
             feature = feature_extractor(exemplar)
             feature.data = feature.data / feature.data.norm() # Normalize
-            X_train.append(feature.numpy())
+            X_train.append(feature.cpu().numpy())
             y_train.append(label)
     
     model = KNeighborsClassifier(n_neighbors = K)
@@ -176,9 +179,11 @@ class ICaRL(nn.Module):
     features = feature_extractor(images)
     for feature in features:
       feature.data = feature.data / feature.data.norm() # Normalize
-      X_pred.append(feature.numpy())
+      X_pred.append(feature.cpu().numpy())
     
     preds = model.predict(X_pred)
+    # --- end prediction
+
     return preds
 
   # NME classification from iCaRL paper
