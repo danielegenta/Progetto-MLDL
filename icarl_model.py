@@ -186,6 +186,7 @@ class ICaRL(nn.Module):
     preds = model.predict(X_pred)
     # --- end prediction
 
+    print(preds)
     return preds
 
   # NME classification from iCaRL paper
