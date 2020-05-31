@@ -28,6 +28,9 @@ from Cifar100.Dataset.cifar100 import CIFAR100
 import random
 import pandas as pd
 
+# new classifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import LinearSVC
 
 # feature_size: 2048, why?
 # n_classes: 10 => 100
@@ -82,6 +85,9 @@ class ICaRL(nn.Module):
     # populated during construct exemplar set and used in the classify step
     self.data_from_classes = []
     self.means_from_classes = []
+
+    # Knn, svc classification
+    self.model = None
   
   # increment the number of classes considered by the net
   # incremental learning approach, 0,10..100
@@ -103,7 +109,6 @@ class ICaRL(nn.Module):
     torch.no_grad()  
     torch.cuda.empty_cache()
 
-    exemplar_means = []
     feature_extractor = self.feature_extractor.to(self.DEVICE)
     feature_extractor.train(False)
 
@@ -112,7 +117,7 @@ class ICaRL(nn.Module):
     with torch.no_grad():
       for tensor_set in self.data_from_classes:
         features = []
-        for tensor, label in tensor_set:
+        for tensor, _ in tensor_set:
           
           tensor = tensor.to(self.DEVICE)
           feature = feature_extractor(tensor)
@@ -131,17 +136,62 @@ class ICaRL(nn.Module):
         tensors_mean.append(mean_tensor)
 
     self.exemplar_means = tensors_mean  # nb the mean is computed over all the imgs
-    #self.means_from_classes = tensors_mean
 
     # cleaning
     torch.no_grad()  
     torch.cuda.empty_cache()
 
+  # train procedure common for KNN and SVC classifier (save a lot of training time)
+  def modelTrain(self, method, K_nn = None):
+    torch.no_grad()
+    torch.cuda.empty_cache()
+
+    feature_extractor = self.feature_extractor.to(self.DEVICE)
+    feature_extractor.train(False)
+
+    # -- train a SVC classifier
+    X_train, y_train = [], []
+
+    for exemplar_set in self.exemplar_sets:
+          for exemplar, label in  exemplar_set:
+            exemplar = exemplar.to(self.DEVICE)
+            feature = feature_extractor(exemplar)
+            feature = feature.squeeze()
+            feature.data = feature.data / feature.data.norm() # Normalize
+            X_train.append(feature.cpu().detach().numpy())
+            y_train.append(label)
+    
+    if method == 'KNN':
+      model = KNeighborsClassifier(n_neighbors = K_nn)
+    elif method == 'SVC':
+      model = LinearSVC()
+    self.model = model.fit(X_train, y_train)
+
+  # common classify function
+  def KNN_SVC_classify(self, images):
+    torch.no_grad()
+    torch.cuda.empty_cache()
+
+    # --- prediction
+    X_pred = []
+    images = images.to(self.DEVICE)
+    feature_extractor = self.feature_extractor.to(self.DEVICE)
+    feature_extractor.train(False)
+
+    features = feature_extractor(images)
+    for feature in features:
+      feature = feature.squeeze()
+      feature.data = feature.data / feature.data.norm() # Normalize
+      X_pred.append(feature.cpu().detach().numpy())
+    
+    preds = self.model.predict(X_pred)
+    # --- end prediction
+    return torch.tensor(preds)
+  
   # classification via fc layer (similar to lwf approach)
   def FCC_classify(self, images):
     _, preds = torch.max(torch.softmax(self.net(images), dim=1), dim=1, keepdim=False)
     return preds
-
   # NME classification from iCaRL paper
   def classify(self, batch_imgs):
       """Classify images by nearest-mean-of-exemplars
