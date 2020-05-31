@@ -32,12 +32,12 @@ import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 
-def auto_loss_rebalancing(n_known, n_classes, loss_type, lambda0=1):
+def auto_loss_rebalancing(n_known, n_classes, loss_type):
   alpha = n_known/n_classes 
 
   if loss_type == 'class':
     return 1-alpha
-  return lambda0*alpha
+  return alpha
 
 def get_rebalancing(rebalancing=None):
   if rebalancing is None:
@@ -458,12 +458,12 @@ class ICaRL(nn.Module):
     rebalancing = get_rebalancing(rebalancing)
     
     def class_loss(outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-      alpha = rebalancing(self.n_known, self.n_classes, 'class', lambda0=lambda0)
+      alpha = rebalancing(self.n_known, self.n_classes, 'class')
       return alpha*class_loss_func(outputs, labels, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
     
     def dist_loss(outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-      alpha = rebalancing(self.n_known, self.n_classes, 'dist', lambda0=lambda0)
-      return alpha*dist_loss_func(outputs, labels, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
+      alpha = rebalancing(self.n_known, self.n_classes, 'dist')
+      return lambda0*alpha*dist_loss_func(outputs, labels, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
     
     return class_loss, dist_loss
 
