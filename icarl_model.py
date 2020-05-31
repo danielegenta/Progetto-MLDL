@@ -422,8 +422,8 @@ class ICaRL(nn.Module):
                 print('L2 loss', (l2_loss1 + l2_loss2).item(), l2_loss1.item(), l2_loss2.item())
                 print('L2 loss rebalanced', l2_loss.item(), (1-alpha)*l2_loss1.item(), alpha*l2_loss2.item())
 
-                self_loss1 = self.class_loss(outputs, labels, row_start=self.n_known)
-                self_loss2 = self.dist_loss(outputs, out_old, row_end=self.n_known)
+                self_loss1 = self.class_loss(outputs, labels, col_start=self.n_known)
+                self_loss2 = self.dist_loss(outputs, out_old, col_end=self.n_known)
                 print('Self losses', (self_loss1 + self_loss2).item(), self_loss1.item(), self_loss2.item())
                 print()
 
