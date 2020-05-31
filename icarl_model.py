@@ -28,6 +28,9 @@ from Cifar100.Dataset.cifar100 import CIFAR100
 import random
 import pandas as pd
 
+# new classifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import LinearSVC
 
 # feature_size: 2048, why?
 # n_classes: 10 => 100
@@ -141,6 +144,43 @@ class ICaRL(nn.Module):
   def FCC_classify(self, images):
     _, preds = torch.max(torch.softmax(self.net(images), dim=1), dim=1, keepdim=False)
     return preds
+
+  # KNN classifier, classification based on K neareast exemplars
+  def KNN_classify(self, images, K):
+  	torch.no_grad()
+	torch.cuda.empty_cache()
+
+	feature_extractor = self.feature_extractor.to(self.DEVICE)
+	feature_extractor.train(False)
+
+	# -- train a KNN classifier
+	X_train, y_train = [], []
+
+	for i, exemplar_set in enumerate(self.exemplar_sets):
+        for exemplar, label in  exemplar_set:
+        	exemplar = exemplar.to(self.DEVICE)
+          	feature = feature_extractor(exemplar)
+          	feature.data = feature.data / feature.data.norm() # Normalize
+          	X_train.append(feature.numpy())
+          	y_train.append(label)
+    
+    model = KNeighborsClassifier(n_neighbors = K)
+    model.fit(X_train, y_train)   
+    # --- end training
+
+    # --- prediction 
+    X_pred = []
+    images = images.to(self.DEVICE)
+    feature_extractor.train(False)
+
+    features = feature_extractor(images)
+	for feature in features:
+	    feature.data = feature.data / feature.data.norm() # Normalize
+	    X_pred.append(feature.numpy())
+
+	preds = model.predict(X_pred)
+	return preds
+
 
   # NME classification from iCaRL paper
   def classify(self, batch_imgs):
