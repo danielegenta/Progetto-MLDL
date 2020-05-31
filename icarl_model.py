@@ -163,6 +163,7 @@ class ICaRL(nn.Module):
           for exemplar, label in  exemplar_set:
             exemplar = exemplar.to(self.DEVICE)
             feature = feature_extractor(exemplar)
+            feature = feature.squeeze()
             feature.data = feature.data / feature.data.norm() # Normalize
             X_train.append(feature.cpu().detach().numpy())
             y_train.append(label)
@@ -178,6 +179,7 @@ class ICaRL(nn.Module):
 
     features = feature_extractor(images)
     for feature in features:
+      feature = feature.squeeze()
       feature.data = feature.data / feature.data.norm() # Normalize
       X_pred.append(feature.cpu().detach().numpy())
     
