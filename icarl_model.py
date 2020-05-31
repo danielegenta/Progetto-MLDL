@@ -109,7 +109,6 @@ class ICaRL(nn.Module):
     torch.no_grad()  
     torch.cuda.empty_cache()
 
-    exemplar_means = []
     feature_extractor = self.feature_extractor.to(self.DEVICE)
     feature_extractor.train(False)
 
@@ -118,7 +117,7 @@ class ICaRL(nn.Module):
     with torch.no_grad():
       for tensor_set in self.data_from_classes:
         features = []
-        for tensor, label in tensor_set:
+        for tensor, _ in tensor_set:
           
           tensor = tensor.to(self.DEVICE)
           feature = feature_extractor(tensor)
@@ -137,7 +136,6 @@ class ICaRL(nn.Module):
         tensors_mean.append(mean_tensor)
 
     self.exemplar_means = tensors_mean  # nb the mean is computed over all the imgs
-    #self.means_from_classes = tensors_mean
 
     # cleaning
     torch.no_grad()  
