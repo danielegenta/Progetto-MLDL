@@ -29,10 +29,27 @@ import random
 import pandas as pd
 
 
+def auto_loss_rebalancing(n_known, n_classes, loss_type):
+  alpha = n_known/n_classes 
+
+  if loss_type == 'class':
+    return 1-alpha
+  return alpha
+
+def get_rebalancing(rebalancing=None):
+  if rebalancing is None:
+    return lambda n_known, n_classes, loss_type: 1
+  if rebalancing in ['auto', 'AUTO']:
+    return auto_loss_rebalancing
+  if callable(rebalancing):
+    return rebalancing
+
 # feature_size: 2048, why?
 # n_classes: 10 => 100
 class ICaRL(nn.Module):
-  def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM,K, herding, reverse_index = None):
+  def __init__(self, feature_size, n_classes,\
+      BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE, MILESTONES, MOMENTUM, K,\
+      herding, reverse_index = None, class_loss_criterion='bce', dist_loss_criterion='bce', loss_rebalancing='auto'):
     super(ICaRL, self).__init__()
     self.net = resnet32()
     self.net.fc = nn.Linear(self.net.fc.in_features, n_classes)
@@ -70,7 +87,8 @@ class ICaRL(nn.Module):
     # 1- BCE loss with Logits (reduction could be mean or sum)
     # 2- BCE loss + sigmoid
     # actually we use just one loss as explained on the forum
-    
+
+    self.class_loss, self.dist_loss = self.build_loss(class_loss_criterion, dist_loss_criterion, loss_rebalancing)
 
     # Means of exemplars (cntroids)
     self.compute_means = True
@@ -403,6 +421,10 @@ class ICaRL(nn.Module):
                 l2_loss = (1-alpha)*l2_loss1 + alpha*l2_loss2
                 print('L2 loss', (l2_loss1 + l2_loss2).item(), l2_loss1.item(), l2_loss2.item())
                 print('L2 loss rebalanced', l2_loss.item(), (1-alpha)*l2_loss1.item(), alpha*l2_loss2.item())
+
+                self_loss1 = self.class_loss(outputs, labels, row_start=self.n_known)
+                self_loss2 = self.dist_loss(outputs, out_old, row_end=self.n_known)
+                print('Self losses', (self_loss1 + self_loss2).item(), self_loss1.item(), self_loss2.item())
                 print()
 
             loss.backward()
@@ -420,14 +442,40 @@ class ICaRL(nn.Module):
     torch.cuda.empty_cache()
 
 
+  def build_loss(self, class_loss_criterion, dist_loss_criterion, rebalancing=None):
+    class_loss_func = None
+    dist_loss_func = None
+
+    if class_loss_criterion in ['l2', 'L2']:
+      class_loss_func = self.l2_class_loss
+    elif class_loss_criterion in ['bce', 'BCE']:
+      class_loss_func = self.bce_class_loss
+    elif class_loss_criterion in ['ce', 'CE']:
+      class_loss_func = self.ce_class_loss
+
+    if dist_loss_criterion in ['l2', 'L2']:
+      dist_loss_func = self.l2_dist_loss
+    elif dist_loss_criterion in ['bce', 'BCE']:
+      dist_loss_func = self.bce_dist_loss
+    elif dist_loss_criterion in ['ce', 'CE']:
+      dist_loss_func = self.ce_dist_loss
+
+    rebalancing = get_rebalancing(rebalancing)
+    
+    def class_loss(outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
+      alpha = rebalancing(self.n_known, self.n_classes, 'class')
+      return alpha*class_loss_func(outputs, labels, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
+    
+    def dist_loss(outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
+      alpha = rebalancing(self.n_known, self.n_classes, 'dist')
+      return alpha*dist_loss_func(outputs, labels, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
+    
+    return class_loss, dist_loss
+
   def bce_class_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-    # alpha = self.n_known/self.n_classes
-    # return (1-alpha)*self.bce_loss(outputs, labels, encode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
     return self.bce_loss(outputs, labels, encode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
 
   def bce_dist_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-    # alpha = self.n_known/self.n_classes
-    # return alpha*self.bce_loss(outputs, labels, encode=False, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
     return self.bce_loss(outputs, labels, encode=False, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
 
   def ce_class_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
