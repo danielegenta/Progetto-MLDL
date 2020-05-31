@@ -28,9 +28,6 @@ from Cifar100.Dataset.cifar100 import CIFAR100
 import random
 import pandas as pd
 
-# new classifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import LinearSVC
 
 def auto_loss_rebalancing(n_known, n_classes, loss_type):
   alpha = n_known/n_classes 
@@ -103,9 +100,6 @@ class ICaRL(nn.Module):
     # populated during construct exemplar set and used in the classify step
     self.data_from_classes = []
     self.means_from_classes = []
-
-    # Knn, svc classification
-    self.model = None
   
   # increment the number of classes considered by the net
   # incremental learning approach, 0,10..100
@@ -127,15 +121,36 @@ class ICaRL(nn.Module):
     torch.no_grad()  
     torch.cuda.empty_cache()
 
+    exemplar_means = []
     feature_extractor = self.feature_extractor.to(self.DEVICE)
     feature_extractor.train(False)
 
-    # new mean mgmt
+    with torch.no_grad():
+      for exemplar_set in self.exemplar_sets:
+        features=[]
+        for exemplar, label in exemplar_set:
+
+          exemplar = exemplar.to(self.DEVICE)
+          feature = feature_extractor(exemplar)
+
+          feature.data = feature.data / feature.data.norm() # Normalize
+          features.append(feature)
+
+          # cleaning 
+          torch.no_grad()
+          torch.cuda.empty_cache()
+
+        features = torch.stack(features) #(num_exemplars,num_features)
+        mean_exemplar = features.mean(0) 
+        mean_exemplar.data = mean_exemplar.data / mean_exemplar.data.norm() # Re-normalize
+        mean_exemplar = mean_exemplar.to('cpu')
+        exemplar_means.append(mean_exemplar)
+
     tensors_mean = []
     with torch.no_grad():
       for tensor_set in self.data_from_classes:
         features = []
-        for tensor, _ in tensor_set:
+        for _, tensor, label in tensor_set:
           
           tensor = tensor.to(self.DEVICE)
           feature = feature_extractor(tensor)
@@ -147,69 +162,24 @@ class ICaRL(nn.Module):
           torch.no_grad()
           torch.cuda.empty_cache()
 
-        features = torch.stack(features) #(num_exemplars,num_features)
-        mean_tensor = features.mean(0) 
-        mean_tensor.data = mean_tensor.data / mean_tensor.data.norm() # Re-normalize
-        mean_tensor = mean_tensor.to('cpu')
-        tensors_mean.append(mean_tensor)
+      features = torch.stack(features) #(num_exemplars,num_features)
+      mean_tensor = features.mean(0) 
+      mean_tensor.data = mean_tensor.data / mean_tensor.data.norm() # Re-normalize
+      mean_tensor = mean_tensor.to('cpu')
+      tensors_mean.append(mean_tensor)
 
-    self.exemplar_means = tensors_mean  # nb the mean is computed over all the imgs
+    self.exemplar_means = exemplar_means
+    self.means_from_classes = tensors_mean
 
     # cleaning
     torch.no_grad()  
     torch.cuda.empty_cache()
 
-  # train procedure common for KNN and SVC classifier (save a lot of training time)
-  def modelTrain(self, method, K_nn = None):
-    torch.no_grad()
-    torch.cuda.empty_cache()
-
-    feature_extractor = self.feature_extractor.to(self.DEVICE)
-    feature_extractor.train(False)
-
-    # -- train a SVC classifier
-    X_train, y_train = [], []
-
-    for exemplar_set in self.exemplar_sets:
-          for exemplar, label in  exemplar_set:
-            exemplar = exemplar.to(self.DEVICE)
-            feature = feature_extractor(exemplar)
-            feature = feature.squeeze()
-            feature.data = feature.data / feature.data.norm() # Normalize
-            X_train.append(feature.cpu().detach().numpy())
-            y_train.append(label)
-    
-    if method == 'KNN':
-      model = KNeighborsClassifier(n_neighbors = K_nn)
-    elif method == 'SVC':
-      model = LinearSVC()
-    self.model = model.fit(X_train, y_train)
-
-  # common classify function
-  def KNN_SVC_classify(self, images):
-    torch.no_grad()
-    torch.cuda.empty_cache()
-
-    # --- prediction
-    X_pred = []
-    images = images.to(self.DEVICE)
-    feature_extractor = self.feature_extractor.to(self.DEVICE)
-    feature_extractor.train(False)
-
-    features = feature_extractor(images)
-    for feature in features:
-      feature = feature.squeeze()
-      feature.data = feature.data / feature.data.norm() # Normalize
-      X_pred.append(feature.cpu().detach().numpy())
-    
-    preds = self.model.predict(X_pred)
-    # --- end prediction
-    return torch.tensor(preds)
-  
   # classification via fc layer (similar to lwf approach)
   def FCC_classify(self, images):
     _, preds = torch.max(torch.softmax(self.net(images), dim=1), dim=1, keepdim=False)
     return preds
+
   # NME classification from iCaRL paper
   def classify(self, batch_imgs):
       """Classify images by nearest-mean-of-exemplars
@@ -227,6 +197,9 @@ class ICaRL(nn.Module):
 
       # update exemplar_means with the mean
       # of all the train data for a given class
+
+      print(self.exemplar_means)
+      print(self.means_from_classes)
 
       means_exemplars = torch.cat(self.exemplar_means, dim=0)
       means_exemplars = torch.stack([means_exemplars] * batch_imgs_size)
@@ -331,18 +304,12 @@ class ICaRL(nn.Module):
         exemplar_set.append((exemplar_k, label))
         exemplar_set_indices.add(exemplar_k_index)
         i = i + 1
-
-    # --- new ---
-    tensor_set = []
-    for i in range(0, len(tensors)):
-      t = tensors[i][1].unsqueeze(dim = 0)
-      tensor_set.append((t, label))
     
     self.exemplar_sets.append(exemplar_set) #update exemplar sets with the updated exemplars images
     self.exemplar_sets_indices.append(exemplar_list_indices)
 
     # this is used to compute more accurately the means of the exemplar (see also computeMeans and classify)
-    self.data_from_classes.append(tensor_set)
+    self.data_from_classes.append(tensors)
 
     # cleaning
     torch.cuda.empty_cache()
@@ -411,21 +378,60 @@ class ICaRL(nn.Module):
             # Forward pass to the network
             outputs = net(images)
 
-            # Loss = only classification on new classes
-            loss = self.class_loss(outputs, labels, col_start=self.n_known)
-            class_loss = loss.item() # Used for logging for debugging purposes
+            labels_one_hot = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
+            labels_one_hot = labels_one_hot.type_as(outputs)
 
+            # Loss = only classification on new classes
+            if len(self.exemplar_sets) == 0:
+                loss = criterion(outputs, labels_one_hot)
             # Distilation loss for old classes, class loss on new classes
             if len(self.exemplar_sets) > 0:
-              out_old = torch.sigmoid(old_net(images))
-              dist_loss = self.dist_loss(outputs, out_old, col_end=self.n_known)
-              loss += dist_loss
+                # print('outputs', outputs.size())
+                # print('labels_one_hot', labels_one_hot.size())
+            
+                labels_one_hot = labels_one_hot.type_as(outputs)
+                out_old = torch.sigmoid(old_net(images)) # Variable(torch.sigmoid(old_net(images)),requires_grad = False)
+                
+                #[outputold, onehot_new]
+                target = torch.cat((out_old[:,:self.n_known], labels_one_hot[:,self.n_known:]),dim=1)
+                loss = criterion(outputs,target)
+                print('original loss', loss.item())
+
+                loss1 = criterion(outputs[:,self.n_known:], labels_one_hot[:,self.n_known:])
+                loss2 = criterion(outputs[:,:self.n_known], out_old[:,:self.n_known])
+
+                alpha = self.n_known/self.n_classes
+                splittedloss = loss1 + loss2
+                splittedloss2 = (1-alpha)*loss1 + alpha*loss2
+                print('summed loss1', splittedloss.item(), loss1.item(), loss2.item())
+                print('summed loss2', splittedloss2.item(), (1-alpha)*loss1.item(), alpha*loss2.item())
+
+                donDistLoss = sum(criterion(outputs[:,y], out_old[:,y]) for y in range(self.n_known))
+                print('donlee dist loss', donDistLoss.item())
+
+                CE = nn.CrossEntropyLoss()
+                donClassLoss = CE(outputs, labels)
+                print('donlee class loss', donClassLoss.item())
+                print('donlee loss (CE + BCE)', (donClassLoss + donDistLoss).item())
+                print('donlee loss (CE + BCE) rebalanced', ((1-alpha)*donClassLoss + alpha*donDistLoss).item())
+
+                
+                l2_loss1 =  self.l2_class_loss(outputs, labels)
+                l2_loss2 =  self.l2_dist_loss(outputs, out_old)
+                l2_loss = (1-alpha)*l2_loss1 + alpha*l2_loss2
+                print('L2 loss', (l2_loss1 + l2_loss2).item(), l2_loss1.item(), l2_loss2.item())
+                print('L2 loss rebalanced', l2_loss.item(), (1-alpha)*l2_loss1.item(), alpha*l2_loss2.item())
+
+                self_loss1 = self.class_loss(outputs, labels, col_start=self.n_known)
+                self_loss2 = self.dist_loss(outputs, out_old, col_end=self.n_known)
+                print('Self losses', (self_loss1 + self_loss2).item(), self_loss1.item(), self_loss2.item())
+                print()
 
             loss.backward()
             optimizer.step()
 
         scheduler.step()
-        print("LOSS: ", loss.item(), 'class loss', class_loss, 'dist loss', dist_loss.item())
+        print("LOSS: ", loss.item())
 
     self.net = copy.deepcopy(net)
     self.feature_extractor = copy.deepcopy(net)
