@@ -416,6 +416,7 @@ class ICaRL(nn.Module):
             class_loss = loss.item() # Used for logging for debugging purposes
 
             # Distilation loss for old classes, class loss on new classes
+            dist_loss = None
             if len(self.exemplar_sets) > 0:
               out_old = torch.sigmoid(old_net(images))
               dist_loss = self.dist_loss(outputs, out_old, col_end=self.n_known)
@@ -425,7 +426,7 @@ class ICaRL(nn.Module):
             optimizer.step()
 
         scheduler.step()
-        print("LOSS: ", loss.item(), 'class loss', class_loss, 'dist loss', dist_loss.item())
+        print("LOSS: ", loss.item(), 'class loss', class_loss, 'dist loss', dist_loss.item() if dist_loss is not None else dist_loss)
 
     self.net = copy.deepcopy(net)
     self.feature_extractor = copy.deepcopy(net)
