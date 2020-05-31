@@ -147,22 +147,22 @@ class ICaRL(nn.Module):
 
   # KNN classifier, classification based on K neareast exemplars
   def KNN_classify(self, images, K):
-  	torch.no_grad()
-	torch.cuda.empty_cache()
+    torch.no_grad()
+    torch.cuda.empty_cache()
 
-	feature_extractor = self.feature_extractor.to(self.DEVICE)
-	feature_extractor.train(False)
+    feature_extractor = self.feature_extractor.to(self.DEVICE)
+    feature_extractor.train(False)
 
-	# -- train a KNN classifier
-	X_train, y_train = [], []
+    # -- train a KNN classifier
+    X_train, y_train = [], []
 
-	for i, exemplar_set in enumerate(self.exemplar_sets):
-        for exemplar, label in  exemplar_set:
-        	exemplar = exemplar.to(self.DEVICE)
-          	feature = feature_extractor(exemplar)
-          	feature.data = feature.data / feature.data.norm() # Normalize
-          	X_train.append(feature.numpy())
-          	y_train.append(label)
+    for i, exemplar_set in enumerate(self.exemplar_sets):
+          for exemplar, label in  exemplar_set:
+            exemplar = exemplar.to(self.DEVICE)
+            feature = feature_extractor(exemplar)
+            feature.data = feature.data / feature.data.norm() # Normalize
+            X_train.append(feature.numpy())
+            y_train.append(label)
     
     model = KNeighborsClassifier(n_neighbors = K)
     model.fit(X_train, y_train)   
@@ -174,8 +174,8 @@ class ICaRL(nn.Module):
     feature_extractor.train(False)
 
     features = feature_extractor(images)
-	for feature in features:
-	    feature.data = feature.data / feature.data.norm() # Normalize
+	  for feature in features:
+      feature.data = feature.data / feature.data.norm() # Normalize
 	    X_pred.append(feature.numpy())
 
 	preds = model.predict(X_pred)
