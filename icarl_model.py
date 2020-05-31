@@ -186,8 +186,7 @@ class ICaRL(nn.Module):
     preds = model.predict(X_pred)
     # --- end prediction
 
-    print(preds)
-    return preds
+    return torch.tensor(preds)
 
   # NME classification from iCaRL paper
   def classify(self, batch_imgs):
