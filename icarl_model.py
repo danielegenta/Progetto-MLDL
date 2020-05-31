@@ -149,7 +149,7 @@ class ICaRL(nn.Module):
     return preds
 
   # KNN classifier, classification based on K neareast exemplars
-  def KNN_classify(self, images, K):
+  def KNN_classify(self, images, K_nn):
     torch.no_grad()
     torch.cuda.empty_cache()
 
@@ -159,15 +159,15 @@ class ICaRL(nn.Module):
     # -- train a KNN classifier
     X_train, y_train = [], []
 
-    for i, exemplar_set in enumerate(self.exemplar_sets):
+    for exemplar_set in self.exemplar_sets:
           for exemplar, label in  exemplar_set:
             exemplar = exemplar.to(self.DEVICE)
             feature = feature_extractor(exemplar)
             feature.data = feature.data / feature.data.norm() # Normalize
-            X_train.append(feature.cpu().numpy())
+            X_train.append(feature.cpu().detach().numpy())
             y_train.append(label)
     
-    model = KNeighborsClassifier(n_neighbors = K)
+    model = KNeighborsClassifier(n_neighbors = K_nn)
     model.fit(X_train, y_train)   
     # --- end training
 
@@ -179,7 +179,7 @@ class ICaRL(nn.Module):
     features = feature_extractor(images)
     for feature in features:
       feature.data = feature.data / feature.data.norm() # Normalize
-      X_pred.append(feature.cpu().numpy())
+      X_pred.append(feature.cpu().detach().numpy())
     
     preds = model.predict(X_pred)
     # --- end prediction
