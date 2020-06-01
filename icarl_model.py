@@ -96,6 +96,7 @@ class ICaRL(nn.Module):
     # Means of exemplars (cntroids)
     self.compute_means = True
     self.exemplar_means = []
+    self.exemplar_mean_nn = [] # means not normalized
 
     self.herding = herding # random choice of exemplars or icarl exemplars strategy?
 
@@ -132,6 +133,7 @@ class ICaRL(nn.Module):
 
     # new mean mgmt
     tensors_mean = []
+    exemplar_mean_nn=[]
     with torch.no_grad():
       for tensor_set in self.data_from_classes:
         features = []
@@ -149,11 +151,13 @@ class ICaRL(nn.Module):
 
         features = torch.stack(features) #(num_exemplars,num_features)
         mean_tensor = features.mean(0) 
+        exemplar_mean_nn.append(mean_tensor.to('cpu'))
         mean_tensor.data = mean_tensor.data / mean_tensor.data.norm() # Re-normalize
         mean_tensor = mean_tensor.to('cpu')
         tensors_mean.append(mean_tensor)
 
     self.exemplar_means = tensors_mean  # nb the mean is computed over all the imgs
+    self.exemplar_mean_nn= exemplar_mean_nn # exemplars means not normalized
 
     # cleaning
     torch.no_grad()  
@@ -205,7 +209,44 @@ class ICaRL(nn.Module):
     preds = self.model.predict(X_pred)
     # --- end prediction
     return torch.tensor(preds)
-  
+    
+  # classify base on cosine similarity
+  def COS_classify(self, batch_imgs):
+    torch.no_grad()
+    torch.cuda.empty_cache()
+    batch_imgs_size = batch_imgs.size(0)
+    feature_extractor = self.feature_extractor.to(self.DEVICE)
+    feature_extractor.train(False)
+
+    means_exemplars = torch.cat(self.exemplar_mean_nn, dim=0)
+    means_exemplars = torch.stack([means_exemplars] * batch_imgs_size)
+    means_exemplars = means_exemplars.transpose(1, 2) # means no normalized
+
+    feature = feature_extractor(batch_imgs) # features no normalized
+    
+    feature=feature.to('cpu')
+    means_exemplars = means_exemplars.to('cpu')
+
+    preds=[]
+    for a in feature:
+      a=a.detach().numpy()
+      aa=np.linalg.norm(a)
+      res=[]
+      for b in means_exemplars:
+        b=b.detach().numpy()
+        bb=np.linalg.norm(b)
+        dot = np.dot(a, b)
+        cos = dot / (aa * bb)
+        res.append(cos)
+      preds.append(np.argmax(np.array(res)))
+
+    # cleaning
+    torch.no_grad()
+    torch.cuda.empty_cache()
+    gc.collect()
+
+    return torch.FloatTensor(preds).to(self.DEVICE)
+
   # classification via fc layer (similar to lwf approach)
   def FCC_classify(self, images):
     _, preds = torch.max(torch.softmax(self.net(images), dim=1), dim=1, keepdim=False)
