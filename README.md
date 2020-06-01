@@ -21,6 +21,6 @@
   - [x] Make up the baselines, which are the results of the Joint Training, Fine tuning, LWF and ICaRL with the default       parameters (3 different seeds). Starting point for point 3,4
   - [x] Mean and Std tailor made for cifar100
 - point 3
-  - [ ] 3 different losses combinations on lwf, icarl
-  - [ ] 3 different classifiers on icarl
-  - [ ] 1 experiment for the above, report all the results
+  - [x] 3 different losses combinations on lwf, icarl
+  - [x] 3 different classifiers on icarl
+  - [x] 1 experiment for the above, report all the results
