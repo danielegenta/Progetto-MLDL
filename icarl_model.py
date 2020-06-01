@@ -515,7 +515,7 @@ class ICaRL(nn.Module):
     return self.bce_loss(outputs, labels, encode=False, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
 
   def ce_class_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-    return self.ce_loss(outputs, self.reverse_index.getNodes(labels), decode=False, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
+    return self.ce_loss(outputs, self.reverse_index.getNodes(labels), decode=False, row_start=row_start, row_end=row_end, col_start=None, col_end=col_end)
     
   def ce_dist_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
     return self.ce_loss(outputs, labels, decode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
