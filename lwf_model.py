@@ -142,14 +142,14 @@ class LWF(nn.Module):
 
             # Forward pass to the network
             outputs = self.forward(images)
-
+            
             # Loss = only classification on new classes
             loss = self.class_loss(outputs, labels, col_start=self.n_known)
             class_loss = loss.item() # Used for logging for debugging purposes
 
             # Distilation loss for old classes, class loss on new classes
             dist_loss = None
-            if len(self.exemplar_sets) > 0:
+            if self.n_known > 0:
               out_old = torch.sigmoid(old_net(images))
               dist_loss = self.dist_loss(outputs, out_old, col_end=self.n_known)
               loss += dist_loss
@@ -159,6 +159,29 @@ class LWF(nn.Module):
 
         scheduler.step()
         print("LOSS: ", loss.item(), 'class loss', class_loss, 'dist loss', dist_loss.item() if dist_loss is not None else dist_loss)
+
+        #     labels_one_hot = utils._one_hot_encode(labels,self.n_classes, self.reverse_index, device=self.DEVICE)
+        #     # test
+        #     #labels_one_hot = nn.functional.one_hot(labels, self.n_classes)
+        #     labels_one_hot.type_as(outputs)
+
+        #     # Classification loss for new classes            
+        #     if self.n_known == 0:
+        #         loss = criterion(outputs, labels_one_hot)
+        #     elif self.n_known > 0:
+            
+        #         labels_one_hot = labels_one_hot.type_as(outputs)[:,self.n_known:]
+        #         out_old = Variable(torch.sigmoid(old_net(images))[:,:self.n_known],requires_grad = False)
+                
+        #         #[outputold, onehot_new]
+        #         target = torch.cat((out_old, labels_one_hot),dim=1)
+        #         loss = criterion(outputs,target)
+
+        #     loss.backward()
+        #     optimizer.step()
+
+        # scheduler.step()
+        # print("LOSS: ",loss)
 
     gc.collect()
     del net
