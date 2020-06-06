@@ -29,6 +29,8 @@ from Cifar100.Dataset.cifar100 import CIFAR100
 import random
 import pandas as pd
 
+from utils import L_G_dist_criterion
+
 # new classifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
@@ -484,6 +486,21 @@ class ICaRL(nn.Module):
                 # Distilation loss for old classes, class loss on new classes
                 dist_loss = None
                 if len(self.exemplar_sets) > 0:
+            
+                    # Test start
+                    feature_extractor_old = self.get_feat_extractor(old_net)
+                    feature_extractor_new = self.get_feat_extractor(net)
+
+                    features_old = feature_extractor_old(images)
+                    features_new = feature_extractor_new(images)
+                    
+                    print('outputs', outputs.size())
+                    print('old_net weights', old_net.fc.weight.size())
+                    print('net weights', net.fc.weight.size())
+                    print('features_old', features_old.size())
+                    print('features_new', features_new.size())
+                    # Test end
+
                     out_old = torch.sigmoid(old_net(images))
                     dist_loss = self.dist_loss(
                         outputs, out_old, col_end=self.n_known)

@@ -139,3 +139,24 @@ def joinSubsets(dataset, subsets):
     return Subset(dataset, indices)
 
 
+def L_G_dist_scalar(feat_old_1d, feat_new_1d):
+	feat_old_1d = feat_old_1d/torch.norm(feat_old_1d, 2)
+	feat_new_1d = feat_new_1d/torch.norm(feat_old_1d, 2)
+	return 1 - feat_old_1d.dot(feat_new_1d)
+
+def L_G_dist(feat_old, feat_new, reduce='mean'):
+	result = torch.zeros(feat_old.size()[0], dtype=torch.float64)
+	for i in range(feat_old.size()[0]):
+		result[i] = L_G_dist_scalar(feat_old[i,:], feat_new[i,:])
+	if reduce == 'mean':
+		return result.mean()
+	elif reduce == 'sum':
+		return result.sum()
+	return result
+
+def L_G_dist_criterion(reduce='mean'):
+	def loss(feat_old, feat_new):
+		return L_G_dist(feat_old, feat_new, reduce=reduce)
+	return loss
+
+
