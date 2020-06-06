@@ -478,6 +478,11 @@ class ICaRL(nn.Module):
     torch.cuda.empty_cache()
 
 
+  def get_feat_extractor(self, net):
+      feature_extractor = copy.deepcopy(net)
+      feature_extractor.fc = nn.Sequential()
+      return feature_extractor
+
   def build_loss(self, class_loss_criterion, dist_loss_criterion, rebalancing=None, lambda0=1):
     class_loss_func = None
     dist_loss_func = None
