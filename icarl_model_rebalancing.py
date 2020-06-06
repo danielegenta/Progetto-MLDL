@@ -24,12 +24,12 @@ from PIL import Image
 from torchvision.transforms import ToPILImage
 
 from Cifar100 import utils
-from Cifar100.resnet import resnet32
+from Cifar100.resnet_rebalancing import resnet32
 from Cifar100.Dataset.cifar100 import CIFAR100
 import random
 import pandas as pd
 
-from utils import L_G_dist_criterion
+# from utils import L_G_dist_criterion
 
 # new classifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -59,10 +59,10 @@ def get_rebalancing(rebalancing=None):
 class ICaRL(nn.Module):
     def __init__(self, feature_size, n_classes,
                  BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE, MILESTONES, MOMENTUM, K,
-                 herding, reverse_index=None, class_loss_criterion='bce', dist_loss_criterion='bce', loss_rebalancing='auto', lambda0=1):
+                 herding, reverse_index=None, class_loss_criterion='base_bce', dist_loss_criterion='bce', loss_rebalancing='auto', lambda0=1):
         super(ICaRL, self).__init__()
         self.net = resnet32()
-        self.net.fc = nn.Linear(self.net.fc.in_features, n_classes)
+        self.net.fc = utils.CosineNormalizationLayer(self.net.fc.in_features, n_classes)
 
         self.feature_extractor = resnet32()
         self.feature_extractor.fc = nn.Sequential()
@@ -120,16 +120,13 @@ class ICaRL(nn.Module):
     # incremental learning approach, 0,10..100
     def increment_classes(self, n):
         gc.collect()
-
         in_features = self.net.fc.in_features
         out_features = self.net.fc.out_features
         weights = self.net.fc.weight.data
-        bias = self.net.fc.bias.data
 
         # add 10 classes to the fc last layer
-        self.net.fc = nn.Linear(in_features, out_features + n)
+        self.net.fc = utils.CosineNormalizationLayer(in_features, out_features + n)
         self.net.fc.weight.data[:out_features] = weights
-        self.net.fc.bias.data[:out_features] = bias
         self.n_classes += n  # icrement #classes considered
 
     # computes the mean of each exemplar set
@@ -447,7 +444,6 @@ class ICaRL(nn.Module):
         # 6 - run network training, with loss function
 
         net = self.net
-
         optimizer = optim.SGD(net.parameters(), lr=self.LR,
                               weight_decay=self.WEIGHT_DECAY, momentum=self.MOMENTUM)
         scheduler = optim.lr_scheduler.MultiStepLR(
@@ -479,8 +475,9 @@ class ICaRL(nn.Module):
                 # Forward pass to the network
                 outputs = net(images)
 
+                m=nn.Softmax()
                 # Loss = only classification on new classes
-                loss = self.class_loss(outputs, labels, col_start=self.n_known)
+                loss = self.class_loss(m(outputs), labels, col_start=self.n_known)
                 class_loss = loss.item()  # Used for logging for debugging purposes
 
                 # Distilation loss for old classes, class loss on new classes
@@ -529,13 +526,15 @@ class ICaRL(nn.Module):
     def build_loss(self, class_loss_criterion, dist_loss_criterion, rebalancing=None, lambda0=1):
         class_loss_func = None
         dist_loss_func = None
-
+        
         if class_loss_criterion in ['l2', 'L2']:
             class_loss_func = self.l2_class_loss
         elif class_loss_criterion in ['bce', 'BCE']:
             class_loss_func = self.bce_class_loss
         elif class_loss_criterion in ['ce', 'CE']:
             class_loss_func = self.ce_class_loss
+        elif class_loss_criterion in ['base_bce', 'BASE_BCE']:
+            class_loss_func = self.base_bce_class_loss
 
         if dist_loss_criterion in ['l2', 'L2']:
             dist_loss_func = self.l2_dist_loss
@@ -558,6 +557,9 @@ class ICaRL(nn.Module):
 
     def bce_class_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
         return self.bce_loss(outputs, labels, encode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
+    
+    def base_bce_class_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
+        return self.base_bce_loss(outputs, labels, encode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
 
     def bce_dist_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
         return self.bce_loss(outputs, labels, encode=False, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
@@ -576,6 +578,16 @@ class ICaRL(nn.Module):
 
     def bce_loss(self, outputs, labels, encode=False, row_start=None, row_end=None, col_start=None, col_end=None):
         criterion = nn.BCEWithLogitsLoss(reduction='mean')
+
+        if encode:
+            labels = utils._one_hot_encode(
+                labels, self.n_classes, self.reverse_index, device=self.DEVICE)
+            labels = labels.type_as(outputs)
+
+        return criterion(outputs[row_start:row_end, col_start:col_end], labels[row_start:row_end, col_start:col_end])
+    
+    def base_bce_loss(self, outputs, labels, encode=False, row_start=None, row_end=None, col_start=None, col_end=None):
+        criterion = nn.BCELoss(reduction='mean')
 
         if encode:
             labels = utils._one_hot_encode(
