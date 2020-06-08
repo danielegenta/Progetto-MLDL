@@ -142,9 +142,11 @@ class ResNet(nn.Module):
         in_features = self.fc.in_features
         out_features = self.fc.out_features
         weight = self.fc.weight.data
+        sigma = self.fc.sigma.data
 
         self.fc = nn.Linear(in_features, out_features + num_new_outputs)
         self.fc.weight.data[:out_features] = weight
+        self.fc.sigma.data = sigma
 
 def resnet20(pretrained=False, **kwargs):
     n = 3

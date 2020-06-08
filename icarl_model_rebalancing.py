@@ -126,11 +126,13 @@ class ICaRL(nn.Module):
         in_features = self.net.fc.in_features
         out_features = self.net.fc.out_features
         weights = self.net.fc.weight.data
+        sigma = self.net.fc.sigma.data
 
         # add 10 classes to the fc last layer
         self.net.fc = utils.CosineNormalizationLayer(
             in_features, out_features + n)
         self.net.fc.weight.data[:out_features] = weights
+        self.net.fc.sigma.data = sigma
         self.n_classes += n  # icrement #classes considered
 
     # computes the mean of each exemplar set
