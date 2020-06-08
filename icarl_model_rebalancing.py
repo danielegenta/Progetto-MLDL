@@ -461,6 +461,8 @@ class ICaRL(nn.Module):
         # define the loader for the augmented_dataset
         loader = DataLoader(augmented_dataset, batch_size=self.BATCH_SIZE,
                             shuffle=True, num_workers=4, drop_last=True)
+        
+        loss_mr = self.build_loss_mr(net, dist=2, lw_mr=1)
 
         if len(self.exemplar_sets) > 0:
             old_net = copy.deepcopy(net)
@@ -504,7 +506,7 @@ class ICaRL(nn.Module):
                     # Test end
 
                     # Test2 start
-                    print('loss3', self.test2(outputs, labels, net))
+                    print('loss3', loss_mr(outputs, labels))
                     # Test2 end
 
                     out_old = torch.sigmoid(old_net(images))
@@ -527,23 +529,23 @@ class ICaRL(nn.Module):
         del net
         torch.cuda.empty_cache()
 
-    def test2(self, outputs, labels, net, dist=1, lw_mr=1):
+    def build_loss_mr(self, net, dist=1, lw_mr=1):
+        def loss(outputs, labels):
+            return self.loss_mr(outputs, labels, net, dist=dist, lw_mr=lw_mr)
+        return loss
+
+    def loss_mr(self, outputs, labels, net, dist=1, lw_mr=1):
+        labels = self.reverse_index.getNodes(labels)
         outputs_bs = outputs / net.fc.sigma
 
         gt_index = torch.zeros(outputs_bs.size()).to(self.DEVICE)
         gt_index = gt_index.scatter(1, labels.view(-1, 1), 1).ge(0.5)
         gt_scores = outputs_bs.masked_select(gt_index)
 
-        print('gt_index', gt_index.size())
-        print('gt_scores', gt_scores.size())
-
         max_novel_scores = outputs_bs[:, self.n_known:].topk(self.top_k, dim=1)[0]
-        print('max_novel_scores', max_novel_scores.size())
 
         hard_index = labels.lt(self.n_known)
         hard_num = torch.nonzero(hard_index).size(0)
-        print('hard_index', hard_index.size())
-        print('hard_num', hard_num.size())
 
         if hard_num > 0:
             gt_scores = gt_scores[hard_index].view(-1, 1).repeat(1, self.top_k)
