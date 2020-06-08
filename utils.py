@@ -145,7 +145,7 @@ def joinSubsets(dataset, subsets):
 
 def L_G_dist_scalar(feat_old_1d, feat_new_1d):
 	feat_old_1d = feat_old_1d/torch.norm(feat_old_1d, 2)
-	feat_new_1d = feat_new_1d/torch.norm(feat_old_1d, 2)
+	feat_new_1d = feat_new_1d/torch.norm(feat_new_1d, 2)
 	return 1 - feat_old_1d.dot(feat_new_1d)
 
 def L_G_dist(feat_old, feat_new, reduce='mean'):
