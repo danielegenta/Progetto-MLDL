@@ -29,7 +29,6 @@ from Cifar100.Dataset.cifar100 import CIFAR100
 import random
 import pandas as pd
 
-from utils import L_G_dist_criterion
 
 # new classifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -465,7 +464,7 @@ class ICaRL(nn.Module):
                             shuffle=True, num_workers=4, drop_last=True)
         
         lambda_G_dis = ((self.n_classes - self.n_known) / self.n_known) * self.lambda_base
-        loss_G_dis = L_G_dist_criterion()
+        loss_G_dis = utils.L_G_dist_criterion()
         loss_mr = self.build_loss_mr(net, dist=2, lw_mr=1)
 
         if len(self.exemplar_sets) > 0:
