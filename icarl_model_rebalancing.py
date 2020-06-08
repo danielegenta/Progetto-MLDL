@@ -59,7 +59,7 @@ def get_rebalancing(rebalancing=None):
 class ICaRL(nn.Module):
     def __init__(self, feature_size, n_classes,
                  BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE, MILESTONES, MOMENTUM, K,
-                 herding, reverse_index=None, class_loss_criterion='base_bce', dist_loss_criterion='bce', loss_rebalancing='auto', lambda0=1):
+                 herding, reverse_index=None, class_loss_criterion='base_bce', dist_loss_criterion='bce', loss_rebalancing='auto', lambda0=1, top_k=10):
         super(ICaRL, self).__init__()
         self.net = resnet32()
         self.net.fc = utils.CosineNormalizationLayer(
@@ -81,6 +81,7 @@ class ICaRL(nn.Module):
         self.MILESTONES = MILESTONES  # when the LR decreases, according to icarl
         self.MOMENTUM = MOMENTUM
         self.K = K
+        self.top_k = top_k
 
         self.reverse_index = reverse_index
 
@@ -532,16 +533,22 @@ class ICaRL(nn.Module):
         gt_index = gt_index.scatter(1, labels.view(-1, 1), 1).ge(0.5)
         gt_scores = outputs_bs.masked_select(gt_index)
 
-        max_novel_scores = outputs_bs[:, self.n_known:].topk(self.K, dim=1)[0]
+        print('gt_index', gt_index.size())
+        print('gt_scores', gt_scores.size())
+
+        max_novel_scores = outputs_bs[:, self.n_known:].topk(self.top_k, dim=1)[0]
+        print('max_novel_scores', hard_index.size())
 
         hard_index = labels.lt(self.n_known)
         hard_num = torch.nonzero(hard_index).size(0)
+        print('hard_index', hard_index.size())
+        print('hard_num', hard_num.size())
 
         if hard_num > 0:
-            gt_scores = gt_scores[hard_index].view(-1, 1).repeat(1, self.K)
+            gt_scores = gt_scores[hard_index].view(-1, 1).repeat(1, self.top_k)
             max_novel_scores = max_novel_scores[hard_index]
             loss3 = nn.MarginRankingLoss(margin=dist)(gt_scores.view(-1, 1),
-                                                      max_novel_scores.view(-1, 1), torch.ones(hard_num*self.K).to(self.DEVICE)) * lw_mr
+                                                      max_novel_scores.view(-1, 1), torch.ones(hard_num*self.top_k).to(self.DEVICE)) * lw_mr
         else:
             loss3 = torch.zeros(1).to(self.DEVICE)
         return loss3
