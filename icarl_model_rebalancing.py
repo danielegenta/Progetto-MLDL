@@ -537,7 +537,7 @@ class ICaRL(nn.Module):
         print('gt_scores', gt_scores.size())
 
         max_novel_scores = outputs_bs[:, self.n_known:].topk(self.top_k, dim=1)[0]
-        print('max_novel_scores', hard_index.size())
+        print('max_novel_scores', max_novel_scores.size())
 
         hard_index = labels.lt(self.n_known)
         hard_num = torch.nonzero(hard_index).size(0)
