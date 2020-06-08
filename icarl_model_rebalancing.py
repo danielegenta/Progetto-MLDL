@@ -394,6 +394,7 @@ class ICaRL(nn.Module):
                 exemplar_k_index = tensors[index][0]
                 exemplar_set.append((exemplar_k, label))
                 exemplar_set_indices.add(exemplar_k_index)
+                exemplar_list_indices.append(exemplar_k_index)
                 i = i + 1
 
         # --- new ---
