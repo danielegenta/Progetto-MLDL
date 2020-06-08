@@ -491,6 +491,7 @@ class ICaRL(nn.Module):
 
                 # Distilation loss for old classes, class loss on new classes
                 dist_loss = None
+                L_mr = None
                 if len(self.exemplar_sets) > 0:
 
                     # Test start
@@ -521,7 +522,8 @@ class ICaRL(nn.Module):
 
             scheduler.step()
             print("LOSS: ", loss.item(), 'class loss', class_loss, 'dist loss',
-                  dist_loss.item() if dist_loss is not None else dist_loss, 'mr loss', L_mr)
+                  dist_loss.item() if dist_loss is not None else dist_loss,
+                  'mr loss', L_mr.item() if L_mr is not None else L_mr)
 
         self.net = copy.deepcopy(net)
         self.feature_extractor = copy.deepcopy(net)
