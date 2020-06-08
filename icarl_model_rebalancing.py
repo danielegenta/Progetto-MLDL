@@ -498,15 +498,17 @@ class ICaRL(nn.Module):
                     features_old = feature_extractor_old(images)
                     features_new = feature_extractor_new(images)
 
-                    print('outputs', outputs.size())
-                    print('old_net weights', old_net.fc.weight.size())
-                    print('net weights', net.fc.weight.size())
-                    print('features_old', features_old.size())
-                    print('features_new', features_new.size())
+                    # print('outputs', outputs.size())
+                    # print('old_net weights', old_net.fc.weight.size())
+                    # print('net weights', net.fc.weight.size())
+                    # print('features_old', features_old.size())
+                    # print('features_new', features_new.size())
                     # Test end
 
                     # Test2 start
+                    print()
                     print('loss3', loss_mr(outputs, labels))
+                    print()
                     # Test2 end
 
                     out_old = torch.sigmoid(old_net(images))
