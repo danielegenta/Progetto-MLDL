@@ -149,7 +149,7 @@ def L_G_dist_scalar(feat_old_1d, feat_new_1d):
 	return 1 - feat_old_1d.dot(feat_new_1d)
 
 def L_G_dist(feat_old, feat_new, reduce='mean'):
-	result = torch.zeros(feat_old.size()[0], dtype=torch.float64)
+	result = torch.zeros(feat_old.size()[0], dtype=torch.float64, device=feat_old.device)
 	for i in range(feat_old.size()[0]):
 		result[i] = L_G_dist_scalar(feat_old[i,:], feat_new[i,:])
 	if reduce == 'mean':
