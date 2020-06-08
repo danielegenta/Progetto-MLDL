@@ -521,7 +521,7 @@ class ICaRL(nn.Module):
 
             scheduler.step()
             print("LOSS: ", loss.item(), 'class loss', class_loss, 'dist loss',
-                  dist_loss.item() if dist_loss is not None else dist_loss)
+                  dist_loss.item() if dist_loss is not None else dist_loss, 'mr loss', L_mr)
 
         self.net = copy.deepcopy(net)
         self.feature_extractor = copy.deepcopy(net)
