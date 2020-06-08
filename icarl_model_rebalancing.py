@@ -463,7 +463,6 @@ class ICaRL(nn.Module):
         loader = DataLoader(augmented_dataset, batch_size=self.BATCH_SIZE,
                             shuffle=True, num_workers=4, drop_last=True)
         
-        lambda_G_dis = ((self.n_classes - self.n_known) / self.n_known) * self.lambda_base
         loss_G_dis = utils.L_G_dist_criterion()
         loss_mr = self.build_loss_mr(net, dist=2, lw_mr=1)
 
@@ -513,6 +512,7 @@ class ICaRL(nn.Module):
                     # out_old = torch.sigmoid(old_net(images))
                     # dist_loss = self.dist_loss(
                     #     outputs, out_old, col_end=self.n_known)
+                    lambda_G_dis = ((self.n_classes - self.n_known) / self.n_known) * self.lambda_base
                     dist_loss = loss_G_dis(features_old, features_new)
                     loss += lambda_G_dis*dist_loss + L_mr
 
