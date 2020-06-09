@@ -58,7 +58,7 @@ def get_rebalancing(rebalancing=None):
 class ICaRL(nn.Module):
     def __init__(self, feature_size, n_classes,
                  BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE, MILESTONES, MOMENTUM, K,
-                 herding, reverse_index=None, class_loss_criterion='base_bce', dist_loss_criterion='bce', loss_rebalancing='auto', lambda0=1, top_k=2, lambda_base=1):
+                 herding, reverse_index=None, class_loss_criterion='base_bce', dist_loss_criterion='bce', loss_rebalancing='auto', lambda0=1, top_k=2, lambda_base=1, dist=0.5, lw_mr=1):
         super(ICaRL, self).__init__()
         self.net = resnet32()
         self.net.fc = utils.CosineNormalizationLayer(
@@ -83,6 +83,8 @@ class ICaRL(nn.Module):
 
         self.top_k = top_k
         self.lambda_base = lambda_base
+        self.dist = dist
+        self.lw_mr = lw_mr
 
         self.reverse_index = reverse_index
 
@@ -466,7 +468,7 @@ class ICaRL(nn.Module):
                             shuffle=True, num_workers=4, drop_last=True)
         
         loss_G_dis = utils.L_G_dist_criterion()
-        loss_mr = self.build_loss_mr(net, dist=0.5, lw_mr=1)
+        loss_mr = self.build_loss_mr(net, dist=self.dist, lw_mr=self.lw_mr)
 
         if len(self.exemplar_sets) > 0:
             old_net = copy.deepcopy(net)
