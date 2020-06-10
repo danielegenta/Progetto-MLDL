@@ -15,7 +15,7 @@ def conv3x3(in_planes, out_planes, stride=1):
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None):
+    def __init__(self, inplanes, planes, stride=1, downsample=None, last_relu=True):
         super(BasicBlock, self).__init__()
         
         self.conv1 = conv3x3(inplanes, planes, stride)
@@ -26,6 +26,7 @@ class BasicBlock(nn.Module):
 
         self.downsample = downsample
         self.stride = stride
+        self.last_relu = last_relu
 
     def forward(self, x):
         residual = x
@@ -41,7 +42,8 @@ class BasicBlock(nn.Module):
             residual = self.downsample(x)
 
         out += residual
-        out = self.relu(out)
+        if self.last_relu:
+            out = self.relu(out)
 
         return out
 
@@ -49,7 +51,7 @@ class BasicBlock(nn.Module):
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None):
+    def __init__(self, inplanes, planes, stride=1, downsample=None, last_relu=True):
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
@@ -61,6 +63,7 @@ class Bottleneck(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
         self.stride = stride
+        self.last_relu = last_relu
 
     def forward(self, x):
         residual = x
@@ -80,7 +83,8 @@ class Bottleneck(nn.Module):
             residual = self.downsample(x)
 
         out += residual
-        out = self.relu(out)
+        if self.last_relu:
+            out = self.relu(out)
 
         return out
 
@@ -119,8 +123,10 @@ class ResNet(nn.Module):
         layers = []
         layers.append(block(self.inplanes, planes, stride, downsample))
         self.inplanes = planes * block.expansion
-        for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes))
+        if blocks > 0:
+            for i in range(1, blocks-1):
+                layers.append(block(self.inplanes, planes))
+            layers.append(block(self.inplanes, planes, last_relu=False))
 
         return nn.Sequential(*layers)
 
