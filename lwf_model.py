@@ -233,10 +233,10 @@ class LWF(nn.Module):
     return self.ce_loss(outputs, labels, decode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
 
   def l2_class_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-    return self.bce_loss(outputs, labels, encode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
+    return self.l2_loss(outputs, labels, encode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
 
   def l2_dist_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-    return self.bce_loss(outputs, labels, encode=False, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
+    return self.l2_loss(outputs, labels, encode=False, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
 
 
   def bce_loss(self, outputs, labels, encode=False, row_start=None, row_end=None, col_start=None, col_end=None):
