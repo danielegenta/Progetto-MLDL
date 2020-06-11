@@ -58,7 +58,7 @@ def get_rebalancing(rebalancing=None):
 class ICaRL(nn.Module):
     def __init__(self, feature_size, n_classes,
                  BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE, MILESTONES, MOMENTUM, K,
-                 herding, reverse_index=None, class_loss_criterion='base_bce', dist_loss_criterion='bce', loss_rebalancing='auto', lambda0=1, top_k=2, lambda_base=1, dist=0.5, lw_mr=1):
+                 herding, reverse_index=None, class_loss_criterion='base_bce', dist_loss_criterion='bce', loss_rebalancing='auto', lambda0=1, L_G_dist=True, top_k=2, lambda_base=1, dist=0.5, lw_mr=1):
         super(ICaRL, self).__init__()
         self.net = resnet32()
         self.net.fc = utils.CosineNormalizationLayer(
@@ -81,6 +81,7 @@ class ICaRL(nn.Module):
         self.MOMENTUM = MOMENTUM
         self.K = K
 
+        self.L_G_dist = L_G_dist
         self.top_k = top_k
         self.lambda_base = lambda_base
         self.dist = dist
@@ -504,10 +505,12 @@ class ICaRL(nn.Module):
                     features_old = feature_extractor_old(images)
                     features_new = feature_extractor_new(images)
 
-                    # out_old = torch.sigmoid(old_net(images))
-                    # dist_loss = self.dist_loss(outputs, out_old, col_end=self.n_known)
-                    lambda_G_dis = ((self.n_classes - self.n_known) / self.n_known) * self.lambda_base
-                    dist_loss = lambda_G_dis*loss_G_dis(features_old, features_new)
+                    if not self.L_G_dist:
+                        out_old = torch.sigmoid(old_net(images))
+                        dist_loss = self.dist_loss(outputs, out_old, col_end=self.n_known)
+                    else:
+                        lambda_G_dis = ((self.n_classes - self.n_known) / self.n_known) * self.lambda_base
+                        dist_loss = lambda_G_dis*loss_G_dis(features_old, features_new)
 
                     loss += dist_loss
                     
