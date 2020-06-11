@@ -133,9 +133,11 @@ class ICaRL(nn.Module):
         self.net.fc.bias.data[:out_features] = bias
         self.n_classes += n  # icrement #classes considered
 
-  def add_task(self, resnet):
-    self.tasks.append(resnet)
-    self.current_task = resnet
+  def add_task(self, n_classes):
+    new_task = resnet32()
+    new_task.fc = nn.Linear(new_task.fc.in_features, n_classes)
+    self.tasks.append(new_task)
+    self.current_task = new_task
 
   # computes the mean of each exemplar set
   def computeMeans(self):
@@ -521,6 +523,7 @@ class ICaRL(nn.Module):
   def train_new_task(self, dataset, train_dataset_big, new_classes):
 
     # 6 - run network training, with loss function
+    self.add_task(10)
 
     net = self.current_task
 
