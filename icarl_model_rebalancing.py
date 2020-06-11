@@ -512,22 +512,26 @@ class ICaRL(nn.Module):
                     # print('features_new', features_new.size())
                     # Test end
 
-                    L_mr = loss_mr(outputs, labels)
 
                     # out_old = torch.sigmoid(old_net(images))
                     # dist_loss = self.dist_loss(
                     #     outputs, out_old, col_end=self.n_known)
                     lambda_G_dis = ((self.n_classes - self.n_known) / self.n_known) * self.lambda_base
                     dist_loss = loss_G_dis(features_old, features_new)
-                    loss += lambda_G_dis*dist_loss + L_mr
+                    loss += lambda_G_dis*dist_loss
+                    
+                    # L_mr = loss_mr(outputs, labels)
+                    # loss += L_mr
 
                 loss.backward()
                 optimizer.step()
 
             scheduler.step()
             print("LOSS: ", loss.item(), 'class loss', class_loss, 'dist loss',
-                  dist_loss.item() if dist_loss is not None else dist_loss,
-                  'mr loss', L_mr.item() if L_mr is not None else L_mr)
+                  dist_loss.item() if dist_loss is not None else dist_loss)
+            # print("LOSS: ", loss.item(), 'class loss', class_loss, 'dist loss',
+            #       dist_loss.item() if dist_loss is not None else dist_loss,
+            #       'mr loss', L_mr.item() if L_mr is not None else L_mr)
 
         self.net = copy.deepcopy(net)
         self.feature_extractor = copy.deepcopy(net)
