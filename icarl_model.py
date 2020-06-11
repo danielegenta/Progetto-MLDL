@@ -107,6 +107,12 @@ class ICaRL(nn.Module):
 
     # Knn, svc classification
     self.model = None
+
+    # QUA! #
+    ###############################################################################################################################################################################################
+    self.oldNetTeachers=[]
+
+    ###############################################################################################################################################################################################
   
   # increment the number of classes considered by the net
   # incremental learning approach, 0,10..100
@@ -436,7 +442,19 @@ class ICaRL(nn.Module):
     loader = DataLoader(augmented_dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
 
     if len(self.exemplar_sets) > 0:
-      old_net = copy.deepcopy(net) 
+      # QUA! #
+      #########################################################################################
+      if len(self.oldNetTeachers)==0:
+        self.oldNetTeachers.append(copy.deepcopy(net)) 
+      else if len(self.oldNetTeachers)==1:
+        aus=self.oldNetTeachers[0]
+        self.oldNetTeachers.append(aus)
+        self.oldNetTeachers[0]=copy.deepcopy(net)
+      else if len(self.oldNetTeachers)==1:
+        aus=self.oldNetTeachers[0]
+        self.oldNetTeachers[1]=aus
+        self.oldNetTeachers[0]=copy.deepcopy(net)
+      #########################################################################################
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
         for _, images, labels in loader:
@@ -448,7 +466,10 @@ class ICaRL(nn.Module):
             # PyTorch, by default, accumulates gradients after each backward pass
             # We need to manually set the gradients to zero before starting a new iteration
             optimizer.zero_grad() # Zero-ing the gradients
+            
 
+            # QUA! #
+            #############################################################################################################
             # Forward pass to the network
             outputs = net(images)
 
@@ -459,12 +480,21 @@ class ICaRL(nn.Module):
             # Distilation loss for old classes, class loss on new classes
             dist_loss = None
             if len(self.exemplar_sets) > 0:
+              old_net=self.oldNetTeachers[0]
               out_old = torch.sigmoid(old_net(images))
               dist_loss = self.dist_loss(outputs, out_old, col_end=self.n_known)
+
+              if len(self.oldNetTeachers)==2:
+                older_net=self.oldNetTeachers[1] # old old net
+                older_out = torch.sigmoid(older_net(images))
+                older_dist_loss = self.double_dist_loss(outputs, older_out, col_end=self.n_known)
+                loss += older_dist_loss
+
               loss += dist_loss
 
             loss.backward()
             optimizer.step()
+            ##############################################################################################################
 
         scheduler.step()
         print("LOSS: ", loss.item(), 'class loss', class_loss, 'dist loss', dist_loss.item() if dist_loss is not None else dist_loss)
@@ -476,7 +506,13 @@ class ICaRL(nn.Module):
     #cleaning
     del net
     torch.cuda.empty_cache()
-
+ # QUA! #
+ ###################################################################################################################
+  def double_dist_loss(outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
+    dist_loss_func = self.bce_dist_loss
+    alpha = rebalancing(self.n_known, self.n_classes, 'dist')
+    return 0.5*alpha*dist_loss_func(outputs, labels, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
+ ##################################################################################################################
 
   def build_loss(self, class_loss_criterion, dist_loss_criterion, rebalancing=None, lambda0=1):
     class_loss_func = None
