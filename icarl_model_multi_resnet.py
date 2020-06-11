@@ -538,7 +538,7 @@ class ICaRL(nn.Module):
     net = net.to(self.DEVICE)
 
     # define the loader for the augmented_dataset
-    loader = DataLoader(augmented_dataset, batch_size=self.BATCH_SIZE,
+    loader = DataLoader(dataset, batch_size=self.BATCH_SIZE,
                         shuffle=True, num_workers=4, drop_last=True)
 
     for epoch in range(self.NUM_EPOCHS):
