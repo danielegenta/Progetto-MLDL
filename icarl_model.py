@@ -554,7 +554,7 @@ class ICaRL(nn.Module):
       labels = labels.type_as(outputs)
     
     loss_val = criterion(outputs[row_start:row_end, col_start:col_end], labels[row_start:row_end, col_start:col_end])
-    return limit_loss(loss_val)
+    return self.limit_loss(loss_val)
 
   def limit_loss(self, loss, limit=3):
     if loss <= limit:
