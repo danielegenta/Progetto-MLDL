@@ -498,27 +498,18 @@ class ICaRL(nn.Module):
                 L_mr = None
                 if len(self.exemplar_sets) > 0:
 
-                    # Test start
                     feature_extractor_old = self.get_feat_extractor(old_net)
                     feature_extractor_new = self.get_feat_extractor(net)
 
                     features_old = feature_extractor_old(images)
                     features_new = feature_extractor_new(images)
 
-                    # print('outputs', outputs.size())
-                    # print('old_net weights', old_net.fc.weight.size())
-                    # print('net weights', net.fc.weight.size())
-                    # print('features_old', features_old.size())
-                    # print('features_new', features_new.size())
-                    # Test end
-
-
                     # out_old = torch.sigmoid(old_net(images))
-                    # dist_loss = self.dist_loss(
-                    #     outputs, out_old, col_end=self.n_known)
+                    # dist_loss = self.dist_loss(outputs, out_old, col_end=self.n_known)
                     lambda_G_dis = ((self.n_classes - self.n_known) / self.n_known) * self.lambda_base
-                    dist_loss = loss_G_dis(features_old, features_new)
-                    loss += lambda_G_dis*dist_loss
+                    dist_loss = lambda_G_dis*loss_G_dis(features_old, features_new)
+
+                    loss += dist_loss
                     
                     # L_mr = loss_mr(outputs, labels)
                     # loss += L_mr
