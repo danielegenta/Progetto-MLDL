@@ -318,7 +318,7 @@ class ICaRL(nn.Module):
         group_lines = predsDF[predsDF['groups'] == i]
         images = preds.loc[group_lines.index, 'images']
         _, nodes = torch.max(task(images), dim=1)
-        predsDF.loc[group_lines.index, 'nodes'] = nodes
+        predsDF.loc[group_lines.index, 'nodes'] = nodes + i*10
 
       return predsDF['nodes']
 
