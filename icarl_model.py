@@ -553,9 +553,14 @@ class ICaRL(nn.Module):
       labels = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
       labels = labels.type_as(outputs)
     
-    return criterion(outputs[row_start:row_end, col_start:col_end], labels[row_start:row_end, col_start:col_end])
+    loss_val = criterion(outputs[row_start:row_end, col_start:col_end], labels[row_start:row_end, col_start:col_end])
+    return self.limit_loss(loss_val)
 
-
+  def limit_loss(self, loss, limit=3):
+    if loss <= limit:
+      return loss
+    denom = loss.item() / limit
+    return loss / denom
   # implementation of alg. 5 of icarl paper
   # iCaRL ReduceExemplarSet
   def reduce_exemplar_sets(self, m):
