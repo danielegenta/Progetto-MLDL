@@ -312,7 +312,8 @@ class ICaRL(nn.Module):
       torch.cuda.empty_cache()
       gc.collect()
 
-      predsDF = pd.DataFrame([batch_imgs, preds], columns=['images', 'groups'])
+      predsDF = pd.DataFrame(list(batch_imgs), columns=['images'])
+      predsDF['groups'] = preds
       predsDF['nodes'] = torch.zeros(preds.size())
 
       for i in range(len(self.tasks)):
