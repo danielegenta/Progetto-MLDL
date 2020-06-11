@@ -444,7 +444,7 @@ class ICaRL(nn.Module):
     #          (add output nodes)
     #          (update n_classes)
     # 5        store network outputs with pre-update parameters
-    self.increment_classes(len(new_classes))
+    self.increment_classes(new_classes)
 
     # 4 - combine current train_subset (dataset) with exemplars
     #     to form a new augmented train dataset
@@ -523,7 +523,8 @@ class ICaRL(nn.Module):
   def train_new_task(self, dataset, train_dataset_big, new_classes):
 
     # 6 - run network training, with loss function
-    self.add_task(10)
+    print('NEW CLASSES', new_classes)
+    self.add_task(new_classes)
 
     net = self.current_task
 
