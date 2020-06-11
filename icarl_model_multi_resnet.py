@@ -659,6 +659,7 @@ class ICaRL(nn.Module):
 
   def _one_hot_encode(self, labels, n_classes, reverse_index, task_label_mapping=False, dtype=None, device='cuda'):
     batch_size = len(labels)
+    n_classes = n_classes if not task_label_mapping else 10
     enconded = torch.zeros(batch_size, n_classes, dtype=dtype, device=device)
     labels = self.map_to_outputs(labels, reverse_index, task_label_mapping=task_label_mapping)
 
