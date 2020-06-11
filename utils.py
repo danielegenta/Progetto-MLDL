@@ -1,4 +1,4 @@
-"""
+B"""
 This is a wrapper of methods used commonly across our various models
 such as: finetuning, icarl, lwf.
 By centralizing them we make the code more efficient and less prone to errors.
@@ -16,6 +16,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from torch.utils.data import Subset, DataLoader
+import math
+from torch.nn.parameter import Parameter
+from torch.nn import functional as F
+from torch.nn import Module
 
 # These are the default iCaRL hyper-parameters
 def getHyperparams():
@@ -28,7 +32,7 @@ def getHyperparams():
 		"BATCH_SIZE": 128,
 		"DEVICE": 'cuda',
 		"GAMMA": 0.2,
-		"SEED": 42, #use 30, 42, 16
+		"SEED": 66, #use 30, 42, 16
 		"LOG_FREQUENCY": 10,
 		"NUM_CLASSES": 100
 	}
@@ -138,4 +142,56 @@ def joinSubsets(dataset, subsets):
         indices += s.indices
     return Subset(dataset, indices)
 
+
+def L_G_dist_scalar(feat_old_1d, feat_new_1d):
+	feat_old_1d = feat_old_1d/torch.norm(feat_old_1d, 2)
+	feat_new_1d = feat_new_1d/torch.norm(feat_new_1d, 2)
+	return 1 - feat_old_1d.dot(feat_new_1d)
+
+def L_G_dist(feat_old, feat_new, reduce='mean'):
+	result = torch.zeros(feat_old.size()[0], dtype=torch.float64, device=feat_old.device)
+	for i in range(feat_old.size()[0]):
+		result[i] = L_G_dist_scalar(feat_old[i,:], feat_new[i,:])
+	if reduce == 'mean':
+		return result.mean()
+	elif reduce == 'sum':
+		return result.sum()
+	return result
+
+def L_G_dist_criterion(reduce='mean'):
+	def loss(feat_old, feat_new):
+		return L_G_dist(feat_old, feat_new, reduce=reduce)
+	return loss
+
+class CosineNormalizationLayer(Module):
+    def __init__(self, in_features, out_features, sigma=True):
+        super(CosineNormalizationLayer, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.weight = Parameter(torch.Tensor(out_features, in_features))
+        if sigma:
+            self.sigma = Parameter(torch.Tensor(1))
+        else:
+            self.register_parameter('sigma', None)
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        stdv = 1. / math.sqrt(self.weight.size(1))
+        self.weight.data.uniform_(-stdv, stdv)
+        if self.sigma is not None:
+            self.sigma.data.fill_(1) #for initializaiton of sigma
+
+    def forward(self, input):
+        #w_norm = self.weight.data.norm(dim=1, keepdim=True)
+        #w_norm = w_norm.expand_as(self.weight).add_(self.epsilon)
+        #x_norm = input.data.norm(dim=1, keepdim=True)
+        #x_norm = x_norm.expand_as(input).add_(self.epsilon)
+        #w = self.weight.div(w_norm)
+        #x = input.div(x_norm)
+        out = F.linear(F.normalize(input, p=2,dim=1), \
+                F.normalize(self.weight, p=2, dim=1))
+        if self.sigma is not None:
+            out = self.sigma * out
+
+        return out
 
