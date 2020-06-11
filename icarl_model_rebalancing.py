@@ -506,6 +506,7 @@ class ICaRL(nn.Module):
                     features_new = feature_extractor_new(images)
 
                     if not self.L_G_dist:
+                        print('not self.L_G_dist')
                         out_old = torch.sigmoid(old_net(images))
                         dist_loss = self.dist_loss(outputs, out_old, col_end=self.n_known)
                     else:
