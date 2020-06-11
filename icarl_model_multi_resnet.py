@@ -616,7 +616,7 @@ class ICaRL(nn.Module):
     if task_label_mapping:
       return self.ce_loss(outputs, self.reverse_index.getNodes(labels), task_label_mapping=task_label_mapping, decode=False, row_start=row_start, row_end=row_end, col_start=None, col_end=col_end)
     else:
-      return self.ce_loss(outputs, self.reverse_index.getGroups(labels), task_label_mapping=task_label_mapping, decode=False, row_start=row_start, row_end=row_end, col_start=None, col_end=col_end)
+      return self.ce_loss(outputs, self.reverse_index.getGroupsOfLabels(labels), task_label_mapping=task_label_mapping, decode=False, row_start=row_start, row_end=row_end, col_start=None, col_end=col_end)
     
   def ce_dist_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
     return self.ce_loss(outputs, labels, decode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
@@ -671,9 +671,9 @@ class ICaRL(nn.Module):
       if reverse_index is None:
         return labels
       if type(labels) == int:
-        return int(reverse_index.getGroups(torch.tensor([labels])))
+        return int(reverse_index.getGroupsOfLabels(torch.tensor([labels])))
       elif type(labels) == torch.Tensor:
-        return reverse_index.getGroups(labels)
+        return reverse_index.getGroupsOfLabels(labels)
     else:
       if reverse_index is None:
         return labels - self.n_known

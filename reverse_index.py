@@ -41,6 +41,16 @@ class ReverseIndex():
 
         nodes = torch.tensor(list(nodes))
         return nodes.to(self.device)
+    
+    def getGroupsOfLabels(self, labels):
+        labels = labels.cpu().numpy()
+       
+        reverse_index = self._changeIndex(self.df, 'labels')
+
+        groups = reverse_index.loc[labels, 'group']
+
+        groups = torch.tensor(list(groups))
+        return groups.to(self.device)
 
     def getGroups(self, distinct=True):
         return self.df['group'].value_counts().index.sort_values()
