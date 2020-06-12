@@ -16,8 +16,8 @@
 - checkpoint
   - [x] Separete all the methodologies into different main
   - [x] Build a utilityFunctions.py
-  - [ ] Build a summary main that print the results (read text files)
-  - [ ] Heavy documentation of all the previous work
+  - [x] Build a summary main that print the results (read text files)
+  - [x] Heavy documentation of all the previous work
   - [x] Make up the baselines, which are the results of the Joint Training, Fine tuning, LWF and ICaRL with the default       parameters (3 different seeds). Starting point for point 3,4
   - [x] Mean and Std tailor made for cifar100
 - point 3
