@@ -437,7 +437,23 @@ class ICaRL(nn.Module):
     loader = DataLoader(augmented_dataset, batch_size=self.BATCH_SIZE,shuffle=True, num_workers=4, drop_last = True)
 
     if len(self.exemplar_sets) > 0:
+<<<<<<< HEAD
       old_net = copy.deepcopy(net) 
+=======
+      # QUA! #
+      #########################################################################################
+      if len(self.oldNetTeachers)==0:
+        self.oldNetTeachers.append(copy.deepcopy(net)) 
+      elif len(self.oldNetTeachers)==1:
+        aus=self.oldNetTeachers[0]
+        self.oldNetTeachers.append(aus)
+        self.oldNetTeachers[0]=copy.deepcopy(net)
+      elif len(self.oldNetTeachers)==1:
+        aus=self.oldNetTeachers[0]
+        self.oldNetTeachers[1]=aus
+        self.oldNetTeachers[0]=copy.deepcopy(net)
+      #########################################################################################
+>>>>>>> b7f88e77f8cdbac05d896c3c8815d842d2381db3
     for epoch in range(self.NUM_EPOCHS):
         print("NUM_EPOCHS: ",epoch,"/", self.NUM_EPOCHS)
         for _, images, labels in loader:
