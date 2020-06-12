@@ -319,10 +319,11 @@ class ICaRL(nn.Module):
       for i in range(len(self.tasks)):
         task = self.tasks[i]
         group_lines = predsDF[predsDF['groups'] == i]
-        images = predsDF.loc[group_lines.index, 'images']
-        images = torch.stack(list(images)).to(self.DEVICE)
-        _, nodes = torch.max(task(images), dim=1)
-        predsDF.loc[group_lines.index, 'nodes'] = nodes.cpu().numpy() + i*10
+        if len(group_lines) > 0:
+            images = predsDF.loc[group_lines.index, 'images']
+            images = torch.stack(list(images)).to(self.DEVICE)
+            _, nodes = torch.max(task(images), dim=1)
+            predsDF.loc[group_lines.index, 'nodes'] = nodes.cpu().numpy() + i*10
 
       return torch.tensor(list(predsDF['nodes']), device=self.DEVICE)
 
