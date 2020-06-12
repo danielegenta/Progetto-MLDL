@@ -32,27 +32,10 @@ import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 
-def auto_loss_rebalancing(n_known, n_classes, loss_type):
-  alpha = n_known/n_classes 
-
-  if loss_type == 'class':
-    return 1-alpha
-  return alpha
-
-def get_rebalancing(rebalancing=None):
-  if rebalancing is None:
-    return lambda n_known, n_classes, loss_type: 1
-  if rebalancing in ['auto', 'AUTO']:
-    return auto_loss_rebalancing
-  if callable(rebalancing):
-    return rebalancing
-
 # feature_size: 2048, why?
 # n_classes: 10 => 100
 class ICaRL(nn.Module):
-  def __init__(self, feature_size, n_classes,\
-      BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE, MILESTONES, MOMENTUM, K,\
-      herding, reverse_index = None, class_loss_criterion='bce', dist_loss_criterion='bce', loss_rebalancing='auto', lambda0=1):
+  def __init__(self, feature_size, n_classes, BATCH_SIZE, WEIGHT_DECAY, LR, GAMMA, NUM_EPOCHS, DEVICE,MILESTONES,MOMENTUM,K, herding, reverse_index = None):
     super(ICaRL, self).__init__()
     self.net = resnet32()
     self.net.fc = nn.Linear(self.net.fc.in_features, n_classes)
@@ -90,13 +73,11 @@ class ICaRL(nn.Module):
     # 1- BCE loss with Logits (reduction could be mean or sum)
     # 2- BCE loss + sigmoid
     # actually we use just one loss as explained on the forum
-
-    self.class_loss, self.dist_loss = self.build_loss(class_loss_criterion, dist_loss_criterion, loss_rebalancing, lambda0=lambda0)
+    
 
     # Means of exemplars (cntroids)
     self.compute_means = True
     self.exemplar_means = []
-    self.exemplar_mean_nn = [] # means not normalized
 
     self.herding = herding # random choice of exemplars or icarl exemplars strategy?
 
@@ -133,7 +114,6 @@ class ICaRL(nn.Module):
 
     # new mean mgmt
     tensors_mean = []
-    exemplar_mean_nn=[]
     with torch.no_grad():
       for tensor_set in self.data_from_classes:
         features = []
@@ -151,13 +131,11 @@ class ICaRL(nn.Module):
 
         features = torch.stack(features) #(num_exemplars,num_features)
         mean_tensor = features.mean(0) 
-        exemplar_mean_nn.append(mean_tensor.to('cpu'))
         mean_tensor.data = mean_tensor.data / mean_tensor.data.norm() # Re-normalize
         mean_tensor = mean_tensor.to('cpu')
         tensors_mean.append(mean_tensor)
 
     self.exemplar_means = tensors_mean  # nb the mean is computed over all the imgs
-    self.exemplar_mean_nn= exemplar_mean_nn # exemplars means not normalized
 
     # cleaning
     torch.no_grad()  
@@ -187,8 +165,6 @@ class ICaRL(nn.Module):
       model = KNeighborsClassifier(n_neighbors = K_nn)
     elif method == 'SVC':
       model = LinearSVC()
-    print(X_train)
-    print(y_train)
     self.model = model.fit(X_train, y_train)
 
   # common classify function
@@ -211,44 +187,7 @@ class ICaRL(nn.Module):
     preds = self.model.predict(X_pred)
     # --- end prediction
     return torch.tensor(preds)
-    
-  # classify base on cosine similarity
-  def COS_classify(self, batch_imgs):
-    torch.no_grad()
-    torch.cuda.empty_cache()
-    batch_imgs_size = batch_imgs.size(0)
-    feature_extractor = self.feature_extractor.to(self.DEVICE)
-    feature_extractor.train(False)
-
-    means_exemplars = torch.cat(self.exemplar_mean_nn, dim=0)
-    means_exemplars = torch.stack([means_exemplars] * batch_imgs_size)
-    means_exemplars = means_exemplars.transpose(1, 2) # means no normalized
-
-    feature = feature_extractor(batch_imgs) # features no normalized
-    
-    feature=feature.to('cpu')
-    means_exemplars = means_exemplars.to('cpu')
-
-    preds=[]
-    for a in feature:
-      a=a.detach().numpy()
-      aa=np.linalg.norm(a)
-      res=[]
-      for b in means_exemplars:
-        b=b.detach().numpy()
-        bb=np.linalg.norm(b)
-        dot = np.dot(a, b)
-        cos = dot / (aa * bb)
-        res.append(cos)
-      preds.append(np.argmax(np.array(res)))
-
-    # cleaning
-    torch.no_grad()
-    torch.cuda.empty_cache()
-    gc.collect()
-
-    return torch.FloatTensor(preds).to(self.DEVICE)
-
+  
   # classification via fc layer (similar to lwf approach)
   def FCC_classify(self, images):
     _, preds = torch.max(torch.softmax(self.net(images), dim=1), dim=1, keepdim=False)
@@ -454,22 +393,27 @@ class ICaRL(nn.Module):
             # Forward pass to the network
             outputs = net(images)
 
-            # Loss = only classification on new classes
-            loss = self.class_loss(outputs, labels, col_start=self.n_known)
-            class_loss = loss.item() # Used for logging for debugging purposes
+            labels_one_hot = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
+            labels_one_hot = labels_one_hot.type_as(outputs)
 
+            # Loss = only classification on new classes
+            if len(self.exemplar_sets) == 0:
+                loss = criterion(outputs, labels_one_hot)
             # Distilation loss for old classes, class loss on new classes
-            dist_loss = None
             if len(self.exemplar_sets) > 0:
-              out_old = torch.sigmoid(old_net(images))
-              dist_loss = self.dist_loss(outputs, out_old, col_end=self.n_known)
-              loss += dist_loss
+
+               labels_one_hot = labels_one_hot.type_as(outputs)[:,len(self.exemplar_sets):]
+               out_old = Variable(torch.sigmoid(old_net(images))[:,:len(self.exemplar_sets)],requires_grad = False)
+
+               #[outputold, onehot_new]
+               target = torch.cat((out_old, labels_one_hot),dim=1)
+               loss = criterion(outputs,target)
 
             loss.backward()
             optimizer.step()
 
         scheduler.step()
-        print("LOSS: ", loss.item(), 'class loss', class_loss, 'dist loss', dist_loss.item() if dist_loss is not None else dist_loss)
+        print("LOSS: ", loss.item())
 
     self.net = copy.deepcopy(net)
     self.feature_extractor = copy.deepcopy(net)
@@ -480,89 +424,6 @@ class ICaRL(nn.Module):
     torch.cuda.empty_cache()
 
 
-  def build_loss(self, class_loss_criterion, dist_loss_criterion, rebalancing=None, lambda0=1):
-    class_loss_func = None
-    dist_loss_func = None
-
-    if class_loss_criterion in ['l2', 'L2']:
-      class_loss_func = self.l2_class_loss
-    elif class_loss_criterion in ['bce', 'BCE']:
-      class_loss_func = self.bce_class_loss
-    elif class_loss_criterion in ['ce', 'CE']:
-      class_loss_func = self.ce_class_loss
-
-    if dist_loss_criterion in ['l2', 'L2']:
-      dist_loss_func = self.l2_dist_loss
-    elif dist_loss_criterion in ['bce', 'BCE']:
-      dist_loss_func = self.bce_dist_loss
-    elif dist_loss_criterion in ['ce', 'CE']:
-      dist_loss_func = self.ce_dist_loss
-
-    rebalancing = get_rebalancing(rebalancing)
-    
-    def class_loss(outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-      alpha = rebalancing(self.n_known, self.n_classes, 'class')
-      return alpha*class_loss_func(outputs, labels, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
-    
-    def dist_loss(outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-      alpha = rebalancing(self.n_known, self.n_classes, 'dist')
-      return lambda0*alpha*dist_loss_func(outputs, labels, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
-    
-    return class_loss, dist_loss
-
-  def bce_class_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-    return self.bce_loss(outputs, labels, encode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
-
-  def bce_dist_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-    return self.bce_loss(outputs, labels, encode=False, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
-
-  def ce_class_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-    return self.ce_loss(outputs, self.reverse_index.getNodes(labels), decode=False, row_start=row_start, row_end=row_end, col_start=None, col_end=col_end)
-    
-  def ce_dist_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-    return self.ce_loss(outputs, labels, decode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
-
-  def l2_class_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-    return self.l2_loss(outputs, labels, encode=True, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
-
-  def l2_dist_loss(self, outputs, labels, row_start=None, row_end=None, col_start=None, col_end=None):
-    return self.l2_loss(outputs, labels, encode=False, row_start=row_start, row_end=row_end, col_start=col_start, col_end=col_end)
-
-
-  def bce_loss(self, outputs, labels, encode=False, row_start=None, row_end=None, col_start=None, col_end=None):
-    criterion = nn.BCEWithLogitsLoss(reduction = 'mean')
-
-    if encode:
-      labels = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
-      labels = labels.type_as(outputs)
-
-    return criterion(outputs[row_start:row_end, col_start:col_end], labels[row_start:row_end, col_start:col_end])
-
-
-  def ce_loss(self, outputs, labels, decode=False, row_start=None, row_end=None, col_start=None, col_end=None):
-    criterion = nn.CrossEntropyLoss()
-
-    if decode:
-      labels = torch.argmax(labels, dim=1)
-    
-    return criterion(outputs[row_start:row_end, col_start:col_end], labels[row_start:row_end])
-
-
-  def l2_loss(self, outputs, labels, encode=False, row_start=None, row_end=None, col_start=None, col_end=None):
-    criterion = nn.MSELoss(reduction = 'mean')
-    
-    if encode:
-      labels = utils._one_hot_encode(labels, self.n_classes, self.reverse_index, device=self.DEVICE)
-      labels = labels.type_as(outputs)
-    
-    loss_val = criterion(outputs[row_start:row_end, col_start:col_end], labels[row_start:row_end, col_start:col_end])
-    return self.limit_loss(loss_val)
-
-  def limit_loss(self, loss, limit=3):
-    if loss <= limit:
-      return loss
-    denom = loss.item() / limit
-    return loss / denom
   # implementation of alg. 5 of icarl paper
   # iCaRL ReduceExemplarSet
   def reduce_exemplar_sets(self, m):
