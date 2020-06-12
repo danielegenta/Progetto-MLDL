@@ -169,7 +169,6 @@ class ICaRL(nn.Module):
 
   # common classify function
   def KNN_SVC_classify(self, images):
-    print("knn")
     torch.no_grad()
     torch.cuda.empty_cache()
 
