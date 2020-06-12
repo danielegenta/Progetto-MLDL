@@ -680,11 +680,11 @@ class ICaRL(nn.Module):
         return reverse_index.getGroupsOfLabels(labels)
     else:
       if reverse_index is None:
-        return labels - self.n_known
+        return labels - (self.n_known * 10)
       if type(labels) == int:
-        return int(reverse_index.getNodes(torch.tensor([labels]))) - self.n_known
+        return int(reverse_index.getNodes(torch.tensor([labels]))) - (self.n_known * 10)
       elif type(labels) == torch.Tensor:
-        return reverse_index.getNodes(labels) - self.n_known
+        return reverse_index.getNodes(labels) - (self.n_known * 10)
 
 
   # implementation of alg. 5 of icarl paper
