@@ -446,11 +446,11 @@ class ICaRL(nn.Module):
       #########################################################################################
       if len(self.oldNetTeachers)==0:
         self.oldNetTeachers.append(copy.deepcopy(net)) 
-      else if len(self.oldNetTeachers)==1:
+      elif len(self.oldNetTeachers)==1:
         aus=self.oldNetTeachers[0]
         self.oldNetTeachers.append(aus)
         self.oldNetTeachers[0]=copy.deepcopy(net)
-      else if len(self.oldNetTeachers)==1:
+      elif len(self.oldNetTeachers)==1:
         aus=self.oldNetTeachers[0]
         self.oldNetTeachers[1]=aus
         self.oldNetTeachers[0]=copy.deepcopy(net)
