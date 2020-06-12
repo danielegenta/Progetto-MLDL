@@ -382,7 +382,7 @@ class ICaRL(nn.Module):
 
           # select argmin not included in exemplar_set_indices
           for i in range(results.shape[0]):
-            index = results[i, 1]
+            index = int(results[i, 1])
             exemplar_k_index = tensors[index][0]
             if exemplar_k_index not in exemplar_set_indices:
               # take the image from the tuple (index, img, label)
