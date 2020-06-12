@@ -313,17 +313,18 @@ class ICaRL(nn.Module):
       gc.collect()
 
       predsDF = pd.DataFrame(list(batch_imgs), columns=['images'])
-      predsDF['groups'] = preds
+      predsDF['groups'] = preds.cpu()
       predsDF['nodes'] = torch.zeros(preds.size())
 
       for i in range(len(self.tasks)):
         task = self.tasks[i]
         group_lines = predsDF[predsDF['groups'] == i]
-        images = preds.loc[group_lines.index, 'images']
+        images = predsDF.loc[group_lines.index, 'images']
+        images = torch.stack(list(images)).to(self.DEVICE)
         _, nodes = torch.max(task(images), dim=1)
-        predsDF.loc[group_lines.index, 'nodes'] = nodes + i*10
+        predsDF.loc[group_lines.index, 'nodes'] = nodes.cpu().numpy() + i*10
 
-      return predsDF['nodes']
+      return torch.tensor(list(predsDF['nodes']), device=self.DEVICE)
 
   # implementation of alg. 4 of icarl paper
   # iCaRL ConstructExemplarSet
