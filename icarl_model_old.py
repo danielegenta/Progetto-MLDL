@@ -187,6 +187,8 @@ class ICaRL(nn.Module):
       model = KNeighborsClassifier(n_neighbors = K_nn)
     elif method == 'SVC':
       model = LinearSVC()
+    print(X_train)
+    print(y_train)
     self.model = model.fit(X_train, y_train)
 
   # common classify function

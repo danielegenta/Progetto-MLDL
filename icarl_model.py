@@ -188,6 +188,8 @@ class ICaRL(nn.Module):
       model = KNeighborsClassifier(n_neighbors = K_nn)
     elif method == 'SVC':
       model = LinearSVC()
+
+
     self.model = model.fit(X_train, y_train)
 
   # common classify function
@@ -562,6 +564,8 @@ class ICaRL(nn.Module):
       return loss
     denom = loss.item() / limit
     return loss / denom
+
+    
   # implementation of alg. 5 of icarl paper
   # iCaRL ReduceExemplarSet
   def reduce_exemplar_sets(self, m):
