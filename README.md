@@ -1,26 +1,14 @@
-#### Progetto-MLDL
-### Incremental learning
+# Incremental learning in image classification: an ablation study
 
-# Todo:
-- point 1
-  - [x] joint training from scratch
-  - [x] training without incremental learning, lwf
-  - [x] bug fix point 1, model, dataset
-  - [x] icarl parameters
-  - [x] documentation 
-- point 2 (icarl and lwf)
-  - [X] NME
-  - [X] Exemplars management
-  - [X] Prototype rehersal, distillation loss
-  - [X] Documentation
-- checkpoint
-  - [x] Separete all the methodologies into different main
-  - [x] Build a utilityFunctions.py
-  - [x] Build a summary main that print the results (read text files)
-  - [x] Heavy documentation of all the previous work
-  - [x] Make up the baselines, which are the results of the Joint Training, Fine tuning, LWF and ICaRL with the default       parameters (3 different seeds). Starting point for point 3,4
-  - [x] Mean and Std tailor made for cifar100
-- point 3
-  - [x] 3 different losses combinations on lwf, icarl
-  - [x] 3 different classifiers on icarl
-  - [x] 1 experiment for the above, report all the results
+## Incremental learning is a learning paradigm in which a deep architecture is required to continually learn from a stream of data.
+
+In our work, we implemented several state-of-the-art algorithms for incremental learning, such as: Fine Tuning, Learning Without Forgetting and [iCaRL](https://arxiv.org/abs/1611.07725). 
+Then, we made several updates to the origial iCaRL algorithm: in particular, we experiment with different combinations of distillation and classification losses and introduce new classifiers into the framework.
+Furthermore, we propose some extensions of the origial iCaRL algorithm and we verify their effectiveness. We perform our tests on [CIFAR-100](https://www.cs.toronto.edu/~kriz/cifar.html), as used in the original iCaRL paper.
+
+Final resulting paper is available [here](https://github.com/danielegenta/Progetto-MLDL/blob/master/Report/Genta_Massimino_Paesante.pdf)
+
+## Frameworks used
+
+-PyTorch
+-scikit-learn
